@@ -1,0 +1,82 @@
+<?php
+
+$ajax = $this->params()->fromPost('ajax', '');
+if($ajax){
+    echo $this->content;
+    return ;
+}
+
+
+$translate = $this->plugin('translate');
+$this->headMeta()->setCharset('utf-8');
+$this->headMeta()->appendName('description', "CartoAffect");
+$this->headMeta()->appendName('author', "Samuel Szoniecky");
+$this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1');
+$this->headLink()->prependStylesheet('//fonts.googleapis.com/css?family=Source+Code+Pro|Lato:400,400italic,700,700italic');
+$this->headTitle("CartoEffect")->setSeparator(' · ');
+$this->headLink()->appendStylesheet($this->assetUrl('css/bootstrap.min.css'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/sticky-footer-navbar.css'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/cartoaffect.css'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/jquery-ui.css'));
+
+
+$this->headScript()->prependFile($this->assetUrl('js/cartoaxes.js'));
+$this->headScript()->prependFile($this->assetUrl('js/d3-sankey.js'));
+$this->headScript()->prependFile($this->assetUrl('js/exploskos.js'));
+$this->headScript()->prependFile($this->assetUrl('js/timelines-chart.min.js'));
+
+
+$this->headScript()->appendFile($this->assetUrl('js/d3.min.js'));
+$this->headScript()->appendFile($this->assetUrl('js/jquery.js'));
+$this->headScript()->appendFile($this->assetUrl('js/popper.min.js'));
+$this->headScript()->appendFile($this->assetUrl('js/bootstrap.min.js'));
+$this->headScript()->appendFile($this->assetUrl('js/fontawesome.v5.5.0.all.js'));
+$this->headScript()->appendFile($this->assetUrl('js/jquery-ui.js'));
+
+
+$this->trigger('view.layout');
+$userBar = $this->userBar();
+
+
+?>
+<?php echo $this->doctype(); ?>
+<?php echo $this->htmlElement('html')->setAttribute('lang', $this->lang()); ?>
+    <head>
+        <?php echo $this->headMeta(); ?>
+        <link rel="shortcut icon" href="<?php echo $this->assetUrl('img/favicon.ico'); ?>" type="image/x-icon" />
+        <?php echo $this->headTitle(); ?>
+        <?php echo $this->headLink(); ?>
+        <?php echo $this->headStyle(); ?>
+        <?php echo $this->headScript(); ?>
+    </head>
+  <body>
+
+    <header>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="<?php echo $site->homepage() ? $site->homepage() : $this->basePath().'/s/'.$site->slug(); ?>"><img style="background-color:white"
+                    src="<?php echo $this->assetUrl('img/logo-paragraphe.svg'); ?>" alt="logo-paragraphe" height="auto"
+                    width="100px" /> Carto Affect
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <?php        
+                    $menu = $site->publicNav()->menu();
+                    $menu->setPartial('cartoaffect/menu');
+                    echo $menu->render();
+                ?>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Begin page content -->
+    <main role="main" class="container">
+        <?php echo $this->messages(); ?>
+        <?php echo $this->content; ?>
+    </main>
+
+    </body>
+</html>

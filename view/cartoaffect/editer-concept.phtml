@@ -1,0 +1,351 @@
+<?php
+
+$translate = $this->plugin('translate');
+//récupère les paramètres de l a page
+$idConcept = $this->params()->fromQuery('idConcept', '');
+$concept = $this->params()->fromQuery('concept', '');
+$pPrefLabel = $this->api()->search('properties', ['term' => 'skos:prefLabel'])->getContent()[0];
+if($idConcept){
+        $item = $this->api()->read('items', $idConcept)->getContent();
+}elseif($concept){
+        $param = array();        
+        $param['property'][0]['property']= $pPrefLabel->id()."";
+        $param['property'][0]['type']='eq';
+        $param['property'][0]['text']=$concept; 
+        $result = $this->api()->search('items',$param)->getContent();
+        if(count($result))
+                $item = $result[0];
+}else{
+        $aC = $this->AleaConcept(1);
+        $item = $aC[0];        
+}
+//récupère la définition des rapports
+//et le réseau du concept
+$rt =  $this->api()->read('resource_templates', ['label' => 'Rapports entre concepts'])->getContent();
+$rc = $this->ReseauConcept($item, $rt);
+$dataReseauConcept=$rc['dataReseauConcept'];
+$cptRapports=$rc['cptRapports'];
+
+//paramètre l'url d'ajout
+$class = $this->api()->search('resource_classes', ['term' => 'skos:Concept'])->getContent()[0];
+$urlAutoComplete = $this->basePath()."/api/items?resource_classes_id=".$class->id()
+        ."&property[0][joiner]=and&property[0][property]=".$pPrefLabel->id()
+        ."&sort_by=title"
+        ."&property[0][type]=in&property[0][text]=";
+$urlSendRapports = "ajout-concept-rapports";
+
+?>
+<style>
+        .ui-autocomplete { z-index:2147483647; }
+        .findTerm {
+                color:red;
+                font-weight: bold;
+        }
+        .modal-header{background-color: black;}
+        .modal-body{background-color: black;}
+        .modal-footer{background-color: black;}
+        .alertRapport {
+                display:none;
+                height:30px;
+                line-height:30px;
+                margin-top:4px;
+                margin-bottom:1px;
+                padding:0px 15px;
+        }
+
+        
+
+</style>
+<div class="alert alert-dark text-center" role="alert">
+        <h4 class="alert-heading"><?php echo $item->link($item->displayTitle(),null,['class'=>'alert-link']); ?></h4>
+        <?php if ($description = $item->displayDescription()): ?>
+        <div class="description"><?php echo $description; ?></div>
+        <?php endif; ?>
+        <hr>
+        <!-- la supression ce fait dans l'admin
+        <a id='btnDelete' type="button" class="btn btn-danger btn-lg"
+                href="<?php echo $item->adminUrl('delete');?>"
+            data-toggle="tooltip" data-placement="bottom" title="supprimer le concept">
+            <i class="fas fa-trash-alt"></i></a>
+        -->
+        <a id='btnEdit' href="<?php echo $item->adminUrl('edit');?>" type="button" class="btn btn-dark btn-lg"
+            data-toggle="tooltip" data-placement="bottom" title="modifier le concept">
+            <i class="fas fa-edit"></i></a>
+        <button id='btnLink' type="button" class="btn btn-dark btn-lg"
+            data-toggle="tooltip" data-placement="bottom" title="relier le concept">
+            <i class="fas fa-link"></i></button>
+</div>
+
+<p id='contSvg'></p>
+       
+
+<div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h5 class="modal-title" id="ajoutConceptLabel"></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                        <div class="modal-body">
+
+                                <div id="contAddCptRapports" class="container">
+                                        <div class="row">
+                                                <div class="col-sm">
+
+                                                        <div class="ui-widget">
+                                                                <label for="tags">Sélectionner un concept :</label>
+                                                                <div id="spinACTags" style="display: none;"
+                                                                        class="spinner-border spinner-border-sm"
+                                                                        role="status">
+                                                                        <span class="sr-only">Chargement...</span>
+                                                                </div>
+                                                                <input class="form-control" id="tags" size="64">
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div class="row">
+                                                <div class="col-sm">
+                                                        <div class="dropdown-divider"></div>
+                                                </div>
+                                        </div>
+
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                                <a href="#" class="btn btn-dark disabled" tabindex="-1" role="button" 
+                                        id="modalBtnValiderRapports" aria-disabled="true">Valider</a>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<script>
+        //construction du sankey
+        let mHaut = d3.select('nav').node().clientHeight;
+        let item = <?php echo json_encode($item); ?>;
+        var searchTerm, cptRapports=[], rapports=<?php echo json_encode($cptRapports);?>;
+
+        var es = new exploskos({
+                'idCont': 'contSvg',
+                'margin': {top: mHaut, right: 10, bottom: 10, left: 5},            
+                'data': <?php echo json_encode($dataReseauConcept); ?>,
+                'fctAjoutSkos':ajoutSkos,
+                });
+        d3.select("#btnLink").on("click",ajoutSkos);
+        d3.select("#modalBtnValiderRapports").on("click",sendrapports);
+
+        //fonctions des icons
+        function ajoutSkos(d){
+                console.log(d);
+                //met à jour le type de rapports
+                d3.select('#ajoutConceptLabel').text("Relier « <?php echo $item->displayTitle(); ?> » à d'autres concepts");
+                //supprime les précends ajouts
+                d3.selectAll('.addCptRapports').remove();
+                //affiche la fenêtre d'ajout
+                $('#modalAjoutSkos').modal('show');
+        }
+        function sendrapports() {
+                let cancel = false;
+                cptRapports.forEach((r,i) => {
+                        if(!r.rapport){
+                                cancel = true;
+                                $('#alertChoixRapport'+i).show();                      
+                        }  
+                });
+                if(cancel)return;
+                /*regroupe les rapports par type
+                let rapports = d3.nest()
+                        .key(function(d){
+                                return d.rapport;
+                        }).entries(cptRapports);         
+                */       
+                $.ajax({
+                        type: 'POST',
+                        dataType: 'json',
+                        url: '<?php echo $urlSendRapports; ?>',
+                        data: {
+                                'ajax':true,
+                                'id': item['o:id'],
+                                'idRt': <?php echo $rt->id();?>,
+                                'rapports': cptRapports
+                        }
+                }).done(function(data) {
+                        $('#modalAjoutSkos').modal('hide');
+                        es.draw(data.dataReseauConcept);
+                })
+                .fail(function(error) {
+                        alert( error.responseText );
+                })
+                .always(function() {
+                        console.log( "complete" );
+                });
+        }
+
+                
+
+    //construction de l'autocomplétion
+    $(function () {
+            $("#tags")
+                    // don't navigate away from the field on tab when selecting an item
+                    .on("keydown", function (event) {
+                            if (event.keyCode === $.ui.keyCode.TAB &&
+                                    $(this).autocomplete("instance").menu.active) {
+                                    event.preventDefault();
+                            }
+                    })
+                    .autocomplete({
+                        minLength: 3,
+                        source: function (request, response) {
+                                searchTerm = request.term;
+                                d3.select('#spinACTags').style('display', 'inline-block');
+                                $.ajax({
+                                        url: "<?php echo $urlAutoComplete;?>" + searchTerm,
+                                        dataType: "json",
+                                        success: function (data) {
+                                                d3.select('#spinACTags').style('display', 'none');
+                                                let rs = data.map(d => {
+                                                        return {
+                                                                'value': d['o:title'],
+                                                                'id': d['o:id']
+                                                        }
+                                                })
+                                                response(rs);
+                                        }
+                                })
+                        },
+                        focus: function () {
+                                // prevent value inserted on focus
+                                return false;
+                        },
+                        select: function (event, ui) {
+                                drawRapport(ui.item);
+
+                                this.value = "";
+                                return false;
+                        },
+                    }).data("ui-autocomplete")._renderItem = function (ul, item) {
+                        const regex = new RegExp(searchTerm,"gi");
+                        let html = '<a>'+item.label.replace(regex,'<span class="findTerm">'+searchTerm+'</span>')+'</a>';
+                        return $("<li></li>")
+                                .data("item.autocomplete", item)
+                                .append(html)
+                                .appendTo(ul);
+                    };
+    });
+    function drawRapport(item){
+        cptRapports.push(item);                                
+        let colGen = d3.select("#contAddCptRapports")
+                .selectAll('.addCptRapports').data(cptRapports).enter()
+                        .append('div').attr('class','row addCptRapports')
+                        .append('div').attr('class','col-12');
+        r = colGen.append('div')
+                .attr('id',(d,i) => 'rChoixRapport'+i)
+                .attr('class','row')
+        let colName = r.append('div').attr('class','col-5');
+        colName.append('span')
+                //.style("margin-left","3px")
+                .text(d=>d.value)
+        let colButton = r.append('div').attr('class','col-1');
+        colButton.append('span')
+                .style("cursor","pointer")
+                .on('click',
+                        (d,i) => delRapport(d,i))
+                .append('i')
+                .attr('class','far fa-trash-alt');
+        let colChoix = r.append('div').attr('class','col-6');
+        colChoix.append('select')
+                .attr('id',d=>'sltCptRapports'+d.id)
+                .attr('class','form-control')
+                .on('change',(d,i)=>choixRapport(d,i))
+                .selectAll('option').data(rapports).enter()
+                .append('option').attr('value',(o,i)=>i).text(o=>o.term);
+
+        let rAlert = colGen.append('div')
+                .attr('id',(d,i) => 'rChoixRapportA'+i)
+                .attr('class','row');
+        let colAlert =rAlert.append('div').attr('class','col-12');
+        colAlert.append('div')
+                .attr('class',"alert alert-danger alertRapport")
+                .attr('id',(d,i)=>"alertChoixRapport"+i)
+                .attr('role','alert')
+                .text('Veuillez choisir/supprimer un rapport...');
+        colAlert.append('div')
+                .attr('class',"alert alert-danger alertRapport")
+                .attr('id',(d,i)=>"alertExisteRapport"+i)
+                .attr('role','alert')
+                .text('Ce rapport existe déjà : supprimer ou remplacer');
+        colAlert.append('div')
+                .attr('class',"alert alert-warning alertRapport")
+                .attr('id',(d,i)=>"alertCoherenceRapport"+i)
+                .attr('role','alert')
+                .text('Le rapport existant sera modifié...');                                        
+        colAlert.append('div')
+                .attr('class',"alert alert-success alertRapport")
+                .attr('id',(d,i)=>"alertAjoutRapport"+i)
+                .attr('role','alert')
+                .text('Le rapport sera ajouté...');                                        
+        colAlert.append('div').attr('class',"dropdown-divider");
+        }
+    function delRapport(d,i){
+        cptRapports.splice(i, 1);            
+        d3.select('#rChoixRapportA'+i).remove();
+        d3.select('#rChoixRapport'+i).remove();
+    }
+    function choixRapport(d, i){
+        let v = d3.select('#sltCptRapports'+d.id).property('value');
+        let r = rapports[v].term;
+        d3.select('#modalBtnValiderRapports')
+                .attr('class','btn btn-dark disabled')
+                .attr('aria-disabled','true');
+        if(existeRapport(d, r)){
+                $('#alertCoherenceRapport'+i).hide();
+                $('#alertAjoutRapport'+i).hide();
+                $('#alertExisteRapport'+i).show();
+        }else if(!coherenceRapport(d, r)){
+                $('#alertCoherenceRapport'+i).show();
+                $('#alertAjoutRapport'+i).hide();
+                $('#alertExisteRapport'+i).hide();
+                d3.select('#modalBtnValiderRapports')
+                        .attr('class','btn btn-dark')
+                        .attr('aria-disabled','false');
+                d.rapport = {'term':r,'action':'replace'};
+        }else{
+                d.rapport = {'term':r,'action':'append'};
+                $('#alertExisteRapport'+i).hide();
+                $('#alertCoherenceRapport'+i).hide();
+                $('#alertAjoutRapport'+i).show();
+                d3.select('#modalBtnValiderRapports')
+                        .attr('class','btn btn-dark')
+                        .attr('aria-disabled','false');
+        }
+        $('#alertChoixRapport'+i).hide();            
+    }
+    function existeRapport(d, r){
+        if(!es.noeudBase.liens.length)return false;
+
+        let noeuds = es.data.nodes.filter(
+                n => n["o:item"] && n['o:item']["o:id"]==d.id);
+        if(!noeuds.length) return false;
+
+        let liens = es.noeudBase.liens.filter(
+                        l => l["term"]==r && l["id"]==noeuds[0]["id"]);
+        return liens.length;       
+    }
+    function coherenceRapport(d, r){
+        if(!es.noeudBase.liens.length)return true;
+
+        let noeuds = es.data.nodes.filter(
+                n => n["o:item"] && n['o:item']["o:id"]==d.id);
+        if(!noeuds.length) return true;
+
+        let liens = es.noeudBase.liens.filter(
+                        l => l["id"]==noeuds[0]["id"]);
+        return liens.length == 0;       
+    }
+
+</script>
+

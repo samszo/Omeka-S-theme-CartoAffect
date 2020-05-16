@@ -1,0 +1,28 @@
+[{
+    group: "Périodes",
+    data: [{
+            label: "utilisations",
+            data: [{
+                    timeRange: ['01/01/2000', '01/01/2001'],
+                    val: 'test 1'
+                },
+                {
+                    timeRange: ['01/03/2000', '01/03/2001'],
+                    val: 'test 2'
+                },
+            ]
+        },
+        {
+            label: "abscences",
+            data: [{
+                    timeRange: ['01/01/2003', '01/01/2004'],
+                    val: 'test 4'
+                },
+                {
+                    timeRange: ['01/03/2010', '01/03/2011'],
+                    val: 'test 5'
+                },
+            ]
+        },
+    ],
+}]

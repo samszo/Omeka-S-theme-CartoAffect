@@ -1,0 +1,19 @@
+<?php
+
+$idConcept = $this->params()->fromPost('id', '');
+$rapports = $this->params()->fromPost('rapports', '');
+$idRt = $this->params()->fromPost('idRt', '');
+$user = $this->identity();
+
+//création des rapports
+$dt = $this->CartoAffectFactory(['user'=>$user, 'idCpt'=>$idConcept, 'rapports'=>$rapports]);
+
+//récup§re le réseau de concept
+$rt =  $this->api()->read('resource_templates', $idRt)->getContent();
+$item = $this->api()->read('items', $idConcept)->getContent();
+$rc = $this->ReseauConcept($item, $rt);
+
+echo json_encode($rc);
+
+
+?>

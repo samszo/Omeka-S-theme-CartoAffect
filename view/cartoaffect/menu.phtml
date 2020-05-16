@@ -1,0 +1,10 @@
+<ul class="navbar-nav mr-auto">
+    <?php foreach($this->container as $page): ?>
+        <li class="nav-item">
+        <?php
+        $page->setClass('nav-link');
+        echo $this->navigation()->menu()->htmlify($page) . PHP_EOL; 
+        ?>
+        </li>
+    <?php endforeach; ?>
+</ul>

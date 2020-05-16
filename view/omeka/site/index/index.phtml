@@ -1,0 +1,63 @@
+<?php
+/**
+ * This index is used as home page only when there is no page in the navigation
+ * of the site.
+ *
+ * @var \Zend\View\Renderer\PhpRenderer $this
+ */
+
+$translate = $this->plugin('translate');
+
+$urlPage = $site->slug()."/page/";
+
+?>
+
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-4">Bienvenue dans la cartographie des affects</h1>
+    <p class="lead">Veuillez sélectionner une dimension exploratoire.</p>
+  </div>
+</div>
+<div class="container">    
+		<div class="row" id="etuCards" >
+  <div class="col mb-4">
+    <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
+      <div class="card-header">Documents</div>
+      <div class="card-body">
+        <h5 class="card-title">Explorez les documents</h5>
+        <p class="card-text">....</p>
+      </div>
+      <div class="card-footer">
+        <a href="#" class="btn btn-dark">C'est ici</a>
+      </div>      
+    </div>
+  </div>
+  <div class="col mb-4">
+    <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
+      <div class="card-header">Personnes</div>
+      <div class="card-body">
+        <h5 class="card-title">Explorez les personnes</h5>
+        <p class="card-text">...</p>
+      </div>
+      <div class="card-footer">
+        <a href="#" class="btn btn-dark">C'est ici</a>
+      </div>      
+    </div>
+  </div>
+  <div class="col mb-4">
+    <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
+      <div class="card-header">Concepts</div>
+      <div class="card-body">
+        <p class="card-text">Ils sont la formalisation d'une intuition</p>
+        <nav class="nav"> 
+          <a href="<?php echo $urlPage.'explorer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="fab fa-wpexplorer"></i></a>
+          <a href="<?php echo $urlPage.'editer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="far fa-edit"></i></a>        
+        </nav>
+      
+      </div>
+      <div class="card-footer">
+      </div>      
+    </div>
+  </div>
+  </div>
+</div>

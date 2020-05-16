@@ -1,0 +1,121 @@
+body{
+    background-color: black;
+    color: white;
+}
+#mainSVG {
+    position: absolute;
+}
+.jumbotron {
+    background-color: rgb(64, 64, 64);
+}
+
+.txtTitreAxe0{
+    fill:rgb(3, 246, 162);
+}
+.txtTitreAxe90{
+    fill:rgb(252, 161, 205);
+}
+.txtTitreAxe180{
+    fill:rgb(84, 214, 255);
+}
+.txtTitreAxe270{
+    fill:rgb(173, 158, 253);
+}
+.txtTitreAxehaut{
+  fill:white;
+}
+.txtTitreAxebas{
+  fill:white;
+}
+.axis line {
+  fill: none;
+  stroke: url(#degraxeH);
+  stroke-width:6px;
+}  
+.x.axis path {
+    fill: none;
+    stroke: url(#degraxeH);
+    stroke-width:6px;
+}  
+.y.axis path {
+    fill: none;
+    stroke: url(#degraxeV);
+    stroke-width:6px;
+}  
+.cFond{
+  stroke-opacity:0.5;
+  fill:none;
+  stroke:url(#center-gradient);
+  stroke-width:3px;
+}
+#orbit1{
+  fill:url(#center-gradient);
+  stroke:none;
+}
+#orbit4{
+  stroke-width:6px;
+}
+#mainG{
+  width:50%;
+  float: left;
+}
+#mainD{
+  width:50%;
+  float: left;
+}
+.eventsG{
+  width:50px;
+  float: left;
+  overflow-y: scroll;
+  scrollbar-color: rgb(84, 214, 255) rgb(173, 158, 253);
+  scrollbar-width: thin;          
+}
+.eventsD{
+  float: left;
+}
+
+.iconsEventType{
+  font-size: 32px; 
+  color: #5aecbc;
+  cursor:pointer;
+}
+.iconsEventListe{
+  font-size: 64px; 
+  color: #5aecbc;
+  float: left;
+  margin-right: 6px;
+  cursor:pointer;
+}        
+.eventLien{
+  font-size: larger;
+}        
+.iconsBtnFlux{
+  font-size: 18px; 
+  color: #5aecbc;
+  cursor:pointer;
+}
+.slct{
+  color: rgb(252, 161, 205);
+}
+#eventsListe{
+  overflow-y: scroll;
+  scrollbar-color: rgb(84, 214, 255) rgb(173, 158, 253);
+  scrollbar-width: thin;          
+}
+.event {
+  border-radius: 25px;
+  border: 2px solid rgb(84, 214, 255);
+  padding: 8px; 
+  height: 128px; 
+  margin-top: 8px;
+}
+#btnConnect{
+  cursor:pointer;
+  fill:none;
+  stroke:#5aecbc;
+  stroke-linejoin:round;
+  stroke-width:1px;
+}
+#txtFctCon{
+  text-anchor: middle;
+}

@@ -1,0 +1,159 @@
+<?php
+
+$translate = $this->plugin('translate');
+$idConcept = $this->params()->fromQuery('idConcept', '');
+$concept = $this->params()->fromQuery('concept', '');
+if($idConcept){
+        $item = $this->api()->read('items', $idConcept)->getContent();
+}elseif($concept){
+        $prop = $this->api()->search('properties', ['term' => 'skos:prefLabel'])->getContent()[0];
+        $param = array();        
+        $param['property'][0]['property']= $prop->id()."";
+        $param['property'][0]['type']='eq';
+        $param['property'][0]['text']=$concept; 
+        $result = $this->api()->search('items',$param)->getContent();
+        if(count($result))
+                $item = $result[0];
+}else{
+        $aC = $this->AleaConcept(1);
+        $item = $aC[0];        
+}
+$itemSetIdCrible = $this->themeSetting('item_set_id_crible');
+$lstItemCrible = $this->Crible($itemSetIdCrible);
+$dataTimeline = $this->HistoConcept($item->id());
+
+$urlPage = "";//$site->slug()."/page/";
+
+?>
+<div class="alert alert-dark text-center" role="alert">
+        <h4 class="alert-heading"><?php echo $item->link($item->displayTitle(),null,['class'=>'alert-link']); ?></h4>
+        <?php if ($description = $item->displayDescription()): ?>
+        <div class="description"><?php echo $description; ?></div>
+        <?php endif; ?>
+        <hr>
+        <button id='btnShowHideDoc' type="button" class="btn btn-dark btn-sm">documents</button>
+        <button id='btnEditer' type="button" class="btn btn-dark btn-sm">éditer</button>
+        <div class="btn-group">
+                <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                cribles
+                </button>
+                <div class="dropdown-menu">
+                ...
+                </div>
+        </div>        
+</div>
+<p id='tlCpt'></p>
+<div id="cartoAxes">
+        <svg>
+                <defs>
+                        <linearGradient id="linear-gradient" y1="0.5" x2="1" y2="0.5" gradientUnits="objectBoundingBox">
+                                <stop offset="0" stop-color="#54d6ff"></stop>
+                                <stop offset="1" stop-color="#5fff84"></stop>
+                        </linearGradient>
+                        <linearGradient id="linear-gradient-2" x1="0.005" y1="0.585" x2="0.991" y2="0.585"
+                                xlink:href="#linear-gradient">
+                        </linearGradient>
+                        <linearGradient id="center-gradient" x1="0.717" y1="1" x2="0" y2="1"
+                                gradientUnits="objectBoundingBox">
+                                <stop offset="0" stop-color="#5ffd8a"></stop>
+                                <stop offset="0.65" stop-color="#58e6ce"></stop>
+                                <stop offset="1" stop-color="#55daf2"></stop>
+                        </linearGradient>
+                        <linearGradient id="degraxeH" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop stop-color="rgb(173, 158, 253)" offset="0%"></stop>
+                                <stop stop-color="rgb(252, 161, 205)" offset="100%"></stop>
+                        </linearGradient>
+                        <linearGradient id="degraxeV" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop stop-color="rgb(3, 246, 162)" offset="0%"></stop>
+                                <stop stop-color="rgb(84, 214, 255)" offset="100%"></stop>
+                        </linearGradient>
+                </defs>
+        </svg>
+</div>
+
+       
+<script>
+        var container, svg, width, height;
+        window.onload = function() { 
+                container = d3.select(".container");
+                svg = d3.select("#cartoAxes svg");
+                width = container.node().clientWidth;
+                height= window.innerHeight - container.node().clientHeight;
+                showCartoAxe(<?php echo json_encode($item);?>); 
+        };
+
+        function showCartoAxe(item) {
+            //récupère la taille du conteneur
+            let c = document.getElementById('cartoAxes');
+            //calcul les tailles
+            let w = width,
+                h = height; //w = c.clientWidth, h = c.clientHeight,        
+            
+            //ajoute le svg global
+            svg.attr("id", "svgGlobal")
+                .attr("width", w)
+                .attr("height", h);
+
+            //liste des axes
+            let urlCpt = <?php echo json_encode($lstItemCrible); ?> 
+                ,lbl,id,lblP,idP;
+            //ajoute la carto axe            
+            lstItemCrible = [];
+            urlCpt.forEach(function(d){
+                lbl = d['skos:prefLabel'][0]['@value'];
+                id = d['o:id'];
+                lblP = d['skos:inScheme'][0]['display_title'];
+                idP = d['skos:inScheme'][0]['value_resource_id'];
+                lstItemCrible.push({'label':lbl,'id':id,'idP':idP,'labelP':lblP});
+            });
+
+            ca = new cartoaxes({
+                'idSvg': 'svgGlobal',
+                'tick': 0,
+                'idDoc': id,
+                'urlData':'../sonar/flux?q=getEvalsOmk',
+                'typeSrc':'IIIF',
+                'inScheme':lblP,
+                'crible': lstItemCrible,
+                //'fctGetGrad': pc.getInstantColors,
+                'fctSavePosi': savePosi,
+                'width': w,
+                'height': h
+                });
+        }
+
+        function savePosi(o){
+                console.log(o);
+        }
+
+
+var dataTimeline = <?php echo json_encode($dataTimeline); ?>;
+var tl = TimelinesChart()(d3.select('#tlCpt').node())
+                .zQualitative(true)
+                .onLabelClick(function(l,g){
+                        var t = d3.select('#tlCpt svg');
+                        t.style('display','none');
+                        console.log(l+' '+g);
+                })
+                .data(dataTimeline);
+function docShowHide(){
+        var tld = d3.select('#tlCpt svg')
+        if(tld.style('display')=='none'){
+                tld.style('display','block')
+                d3.select('#btnShowHideDoc').attr('class','btn btn-ligth btn-sm');                        
+        }else{
+                tld.style('display','none');
+                d3.select('#btnShowHideDoc').attr('class','btn btn-dark btn-sm');                        
+        } 
+}
+d3.select('#btnShowHideDoc').on('click',docShowHide);
+docShowHide();
+
+d3.select('#btnEditer').on('click',cptShowEditer);
+function cptShowEditer(){
+        var url = '<?php echo $urlPage.'editer-concept?idConcept='.$item->id(); ?>';
+        window.location = url;
+}
+
+</script>
+

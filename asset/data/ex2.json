@@ -1,0 +1,88 @@
+[{
+    "group": "Document",
+    "data": [{
+        "label": "Les concepts de fractalit\u00e9 et de chaos g\u00e9n\u00e9ralis\u00e9s - Cairn.info",
+        "data": {
+            "timeRange": ["2016\/04\/10 05:24:09 +0000", "2016\/04\/10 05:37:36 +0000"],
+            "val": "valide"
+        }
+    }, {
+        "label": "Introduction - Cairn.info",
+        "data": {
+            "timeRange": ["2016\/04\/10 05:21:36 +0000", "2016\/04\/10 05:21:36 +0000"],
+            "val": "valide"
+        }
+    }, {
+        "label": "aparshin\/leaflet-fractal",
+        "data": {
+            "timeRange": ["2015\/05\/31 09:50:09 +0000", "2015\/05\/31 09:50:09 +0000"],
+            "val": "valide"
+        }
+    }, {
+        "label": "Leaflet TileLayer.Canvas with Web Workers example",
+        "data": {
+            "timeRange": ["2015\/05\/31 09:48:55 +0000", "2015\/05\/31 09:48:55 +0000"],
+            "val": "valide"
+        }
+    }, {
+        "label": "Fractal Experience 2: GIFs That Maximize Creativity in a Tiny File",
+        "data": {
+            "timeRange": ["2015\/01\/22 20:20:53 +0000", "2015\/01\/22 20:20:53 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Cypress",
+        "data": {
+            "timeRange": ["2012\/08\/05 06:24:11 +0000", "2012\/08\/05 06:24:11 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Polymaps - Mandelbrot Set",
+        "data": {
+            "timeRange": ["2012\/02\/10 16:34:44 +0000", "2012\/02\/10 16:34:44 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Fractal Flowers, Miguel Chevalier, 2008",
+        "data": {
+            "timeRange": ["2011\/01\/05 16:36:30 +0000", "2011\/10\/08 14:20:58 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Le web. Un point c\u2019est tout ? \u00bb Article \u00bb OWNI, Digital Journalism",
+        "data": {
+            "timeRange": ["2010\/12\/17 08:31:59 +0000", "2011\/10\/08 14:21:10 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Jot \u00bb 2006 OFFF Prints",
+        "data": {
+            "timeRange": ["2008\/05\/29 19:09:49 +0000", "2011\/02\/21 13:43:00 +0000"],
+            "val": "valide"
+        }
+    }, {
+        "label": "victor taba",
+        "data": {
+            "timeRange": ["2008\/02\/06 18:57:12 +0000", "2011\/02\/21 13:43:39 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "current work",
+        "data": {
+            "timeRange": ["2007\/05\/02 06:39:25 +0000", "2011\/02\/21 13:44:49 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "ibbOLClient 1.0",
+        "data": {
+            "timeRange": ["2007\/01\/12 16:30:34 +0000", "2011\/02\/21 13:45:29 +0000"],
+            "val": "404"
+        }
+    }, {
+        "label": "Mandelbrot in C# and windows forms - The Code Project - C# Programming",
+        "data": {
+            "timeRange": ["2006\/08\/08 19:57:36 +0000", "2011\/02\/21 13:46:06 +0000"],
+            "val": "404"
+        }
+    }]
+}]
