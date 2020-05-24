@@ -16,14 +16,9 @@ $this->headLink()->prependStylesheet('//fonts.googleapis.com/css?family=Source+C
 $this->headTitle("CartoEffect")->setSeparator(' · ');
 $this->headLink()->appendStylesheet($this->assetUrl('css/bootstrap.min.css'));
 $this->headLink()->appendStylesheet($this->assetUrl('css/sticky-footer-navbar.css'));
-$this->headLink()->appendStylesheet($this->assetUrl('css/cartoaffect.css'));
 $this->headLink()->appendStylesheet($this->assetUrl('css/jquery-ui.css'));
-
-
-$this->headScript()->prependFile($this->assetUrl('js/cartoaxes.js'));
-$this->headScript()->prependFile($this->assetUrl('js/d3-sankey.js'));
-$this->headScript()->prependFile($this->assetUrl('js/exploskos.js'));
-$this->headScript()->prependFile($this->assetUrl('js/timelines-chart.min.js'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/timelines.css'));
+$this->headLink()->appendStylesheet($this->assetUrl('css/cartoaffect.css'));
 
 
 $this->headScript()->appendFile($this->assetUrl('js/d3.min.js'));
@@ -33,10 +28,18 @@ $this->headScript()->appendFile($this->assetUrl('js/bootstrap.min.js'));
 $this->headScript()->appendFile($this->assetUrl('js/fontawesome.v5.5.0.all.js'));
 $this->headScript()->appendFile($this->assetUrl('js/jquery-ui.js'));
 
+$this->headScript()->appendFile($this->assetUrl('js/d3-sankey.js'));
+$this->headScript()->appendFile($this->assetUrl('js/timelines-chart.min.js'));
+
+$this->headScript()->appendFile($this->assetUrl('js/polarclock.js'));
+$this->headScript()->appendFile($this->assetUrl('js/cartoaxes.js'));
+$this->headScript()->appendFile($this->assetUrl('js/exploskos.js'));
+$this->headScript()->appendFile($this->assetUrl('js/cartoaffect.js'));
+
+
 
 $this->trigger('view.layout');
 $userBar = $this->userBar();
-
 
 ?>
 <?php echo $this->doctype(); ?>

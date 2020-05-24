@@ -17,7 +17,7 @@
         this.fctCallBackInit = params.fctCallBackInit ? params.fctCallBackInit : false;
         this.svg = d3.select("#"+params.idSvg),
         this.width = params.width ? params.width : this.svg.attr("width"),
-        this.height = params.height ? params.height : svg.attr("height"),
+        this.height = params.height ? params.height : this.svg.attr("height"),
         this.xMin = params.xMin ? params.xMin : 0;          
         this.xMax = params.xMax ? params.xMax : 100;          
         this.yMin = params.yMin ? params.yMin : 0;          
@@ -29,7 +29,7 @@
         this.fctSavePosi = params.fctSavePosi ? params.fctSavePosi : false;
         this.idDoc = params.idDoc ? params.idDoc : false;
         this.typeSrc = params.typeSrc ? params.typeSrc : false;
-        this.inScheme = params.inScheme ? params.inScheme : false;
+        this.hasRatingSystem = params.hasRatingSystem ? params.hasRatingSystem : false;
 
         //variable pour les axes
         var labelFactor = 1, 	//How much farther than the radius of the outer circle should the labels be placed
@@ -44,11 +44,45 @@
         //drag variables
         onDrag = true, svgDrag,
         //distance variable
-        pointCentral;
+        pointCentral,
+        tooltip;
+
+        //création des dégradé
+        svgDefs = this.svg.append('defs');
+
+
+        let lg = svgDefs.append('linearGradient')
+            .attr('id',"degraxeH")
+            .attr('x1',"0%")
+            .attr('y1',"0%")
+            .attr('x2',"100%")
+            .attr('y2',"0%")
+        lg.append('stop').attr('offset',"0%").attr('stop-color',"rgb(173, 158, 253)")
+        lg.append('stop').attr('offset',"100%").attr('stop-color',"rgb(252, 161, 205)")
+        lg = svgDefs.append('linearGradient')
+            .attr('id',"degraxeV")
+            .attr('x1',"0%")
+            .attr('y1',"0%")
+            .attr('x2',"100%")
+            .attr('y2',"0%")
+        lg.append('stop').attr('offset',"0%").attr('stop-color',"rgb(3, 246, 162)")
+        lg.append('stop').attr('offset',"100%").attr('stop-color',"rgb(84, 214, 255)")
+
+        lg = svgDefs.append('linearGradient')
+            .attr('id',"degradCenter")
+            .attr('x1',"0.717")
+            .attr('y1',"1")
+            .attr('x2',"0")
+            .attr('y2',"1")
+            .attr('gradientUnits',"objectBoundingBox")
+        lg.append('stop').attr('offset',"0").attr('stop-color',"#5ffd8a")
+        lg.append('stop').attr('offset',"0.65").attr('stop-color',"#58e6ce")
+        lg.append('stop').attr('offset',"1").attr('stop-color',"#55daf2")
+
 
         //positionnement du graphique
         this.transform = params.transform ? params.transform : "translate(" + me.width/2+','+me.height/2 + ") scale(0.9)";          
-        this.g = svg.append("g")
+        this.g = this.svg.append("g")
             .attr("class", "cartoaxes")
             .attr("transform", this.transform);
         //calcule des échelles
@@ -67,8 +101,6 @@
         
         this.init = function () {
 
-            //ajoute une balise def pour les dégradés
-            svgDefs = me.g.append('defs');
 
             me.g.append("rect")
             .attr("width", me.width)
@@ -84,6 +116,7 @@
             
             me.drawAxes();
             me.drawCible();
+            me.drawData();
 
             //Ajoute le titre de la carto
             me.g.append("text")
@@ -94,8 +127,36 @@
                 .attr("x", 0)
                 .attr("y", -(me.height/2)-(marges.top/2))
                 .text(me.titre);
+
+          //ajout du tooltip
+          d3.select(".tooltipCartoAxes").remove();
+          tooltip = d3.select("body").append("div")
+            .attr("class", "tooltipCartoAxes")
+            .style('position','absolute')
+            .style('padding','4px')
+            .style('background-color','black')
+            .style('color','white')
+            .style('pointer-events','none');
+
            
         };
+
+
+        function showTooltip(d){
+            //calcule les élément du tooltip
+            console.log(d);
+            tooltip.html("<h3>"+d["jdc:hasActant"][0].display_title+"</h3>"
+                +"<h4>"+d["o:created"]["@value"]+"</h4>"
+                )
+                .style("display","block")
+                .style("left", (d3.event.pageX + 12) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+	    }
+
+        function hideTooltip(){
+            tooltip.style("display","none");
+	    }
+
 
         // Fonction pour créer la cible
         this.drawCible = function(d) {
@@ -212,24 +273,9 @@
                 //enlève les anciennes évaluations
                 me.g.selectAll(".evals").remove();
                 //cherche sur le serveur les évaluations existantes               
-                $.get(me.urlData, {
-                    'id': me.idDoc,
-                    'inScheme':me.inScheme,
-                }, function (data) {
-                    //console.log(data);
-                    //filtre les concepts du crible
-                    let dtFiltre = data.result.filter(function(c){
-                        return c['ma:hasRatingSystem'][0].display_title==me.inScheme;
-                    });
-                    /*
-                    let rs = [];
-                    dtFiltre.forEach(function(r){
-                        r.valeur=JSON.parse(r.valeur);
-                        r.struc=JSON.parse(r.struc);
-                    });
-                    */
+                $.get(me.urlData, {}, function (data) {
                     me.g.selectAll(".evals")
-                        .data(dtFiltre)
+                        .data(data)
                       .enter().append("circle")
                         .attr("class", "evals")
                         .attr('r',scCircle.step()/3)
@@ -249,7 +295,10 @@
                             return me.setGradient(d.degrad);
                         })
                         .attr('stroke','black')
-                        .attr("stroke-width",'1');
+                        .attr("stroke-width",'1')
+                        .on('mouseenter',d => showTooltip(d))
+                        .on('mouseleave',d => hideTooltip());
+
                 }, "json")
                 .fail(function (e) {
                     throw new Error("Chargement des données imposible : " + e);

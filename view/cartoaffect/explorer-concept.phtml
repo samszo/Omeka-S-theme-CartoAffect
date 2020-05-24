@@ -1,28 +1,46 @@
 <?php
 
 $translate = $this->plugin('translate');
-$idConcept = $this->params()->fromQuery('idConcept', '');
-$concept = $this->params()->fromQuery('concept', '');
-if($idConcept){
-        $item = $this->api()->read('items', $idConcept)->getContent();
-}elseif($concept){
-        $prop = $this->api()->search('properties', ['term' => 'skos:prefLabel'])->getContent()[0];
-        $param = array();        
-        $param['property'][0]['property']= $prop->id()."";
-        $param['property'][0]['type']='eq';
-        $param['property'][0]['text']=$concept; 
-        $result = $this->api()->search('items',$param)->getContent();
-        if(count($result))
-                $item = $result[0];
-}else{
-        $aC = $this->AleaConcept(1);
-        $item = $aC[0];        
-}
-$itemSetIdCrible = $this->themeSetting('item_set_id_crible');
-$lstItemCrible = $this->Crible($itemSetIdCrible);
+
+//récupère les utiles de la page
+$props = $this->pageProps();
+$urls = $this->pageUrls($props);
+
+$item = $this->getItem($props);
+
+//récupère la collection des cribles
+$itemSetCrible = $this->themeSetting('item_set_id_crible');
+$cribles = $this->Crible($itemSetCrible);
+//récupère l'historique documentaire du concept
 $dataTimeline = $this->HistoConcept($item->id());
+//récupère la liste des cartographies
+$rtCS =  $this->api()->read('resource_templates', ['label' => 'cartographie sémantique'])->getContent();
+$cartos =  $this->api()->search('items', ['resource_template_id' => $rtCS->id()])->getContent();
+
+//récupère l'actant 
+$ca = $this->CartoAffectFactory(['user'=>$this->identity(),'itemCpt'=>$item]);
+$actant = $ca['actant'];
+
+//TODO:mettre un sélecteur de ressource template dans les settings du thème
+//récupère la définition des rapports
+//et le réseau du concept
+$rtRapport = $this->api()->read('resource_templates', $this->themeSetting('rt_idRapport'))->getContent();
+$rc = $this->ReseauConcept($item, $actant, $rtRapport);
+$dataReseauConcept=$rc['dataReseauConcept'];
+$cptRapports=$rc['cptRapports'];
+//récupère la définition pour Sonar
+$rtSonar = $this->api()->read('resource_templates', $this->themeSetting('rt_idSonar'))->getContent();
+
+$urlSendRapports = "ajout-concept-rapports";
 
 $urlPage = "";//$site->slug()."/page/";
+$flux = "explorer-concept";
+
+
+//requête pour récupèrer les positions sémantique sonar de cet item
+$urlDataSonar = '../../../api/items?resource_template_id='.$rtSonar->id()
+        .'&property[0][joiner]=and&property[0][property]='.$props['oa:hasSource']->id().'&property[0][type]=res&property[0][text]='.$item->id()
+        .'&property[1][joiner]=and&property[1][property]='.$props['ma:hasRatingSystem']->id().'&property[1][type]=res&property[1][text]=';
 
 ?>
 <div class="alert alert-dark text-center" role="alert">
@@ -31,99 +49,281 @@ $urlPage = "";//$site->slug()."/page/";
         <div class="description"><?php echo $description; ?></div>
         <?php endif; ?>
         <hr>
-        <button id='btnShowHideDoc' type="button" class="btn btn-dark btn-sm">documents</button>
-        <button id='btnEditer' type="button" class="btn btn-dark btn-sm">éditer</button>
-        <div class="btn-group">
-                <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                cribles
-                </button>
-                <div class="dropdown-menu">
-                ...
+        <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Gestion des concepts">
+
+                <div class="btn-group" role="group" aria-label="Outils d'édition des concepts">
+
+                        <a id='btnShowHideDoc' href="#" type="button"
+                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
+                                title="Afficher les documents">
+                                <i class="fas fa-file-contract"></i></a>
+                        <!--                                                                        
+                        <a id='btnEditer' href="<?php echo $urlPage.'editer-concept?concept='.$item->displayTitle(); ?>" type="button"
+                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
+                                title="modifier le concept">
+                                <i class="fas fa-edit"></i></a>
+                        -->
+                        <a id='btnEdit' href="<?php echo $item->adminUrl('edit');?>" type="button"
+                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
+                                title="modifier le concept">
+                                <i class="fas fa-edit"></i></a>
+                        <button id='btnLink' type="button" class="btn btn-dark btn-sm" data-toggle="tooltip"
+                                data-placement="bottom" title="relier le concept">
+                                <i class="fas fa-link"></i></button>
+
                 </div>
-        </div>        
+                <div class="btn-group" role="group" aria-label="Outils d'évaluation des concepts">
+                        <div class="btn-group">
+                                <button id='btnCribles' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                cribles
+                                </button>
+                                <div id='ddCribles' class="dropdown-menu" aria-labelledby="btnCribles">
+                                </div>
+                        </div>
+                        <button id='btnChoixCrible' class="btn btn-light btn-sm" type="button" >
+                                ...
+                        </button>
+                        <div class="btn-group">
+                                <button id='btnCartos' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                cartographies
+                                </button>
+                                <div id='ddCartos' class="dropdown-menu" aria-labelledby="btnCartos">
+                                </div>
+                        </div>
+                        <button id='btnChoixCarto' class="btn btn-light btn-sm" type="button" >
+                                ...
+                        </button>
+                </div>
+
+                <div class="input-group">
+                        <div class="input-group-prepend">
+                                <div class="input-group-text" id="btnFindConcept">
+                                        <i id="icon-findTags" class="fas fa-search"></i>
+                                        <div id="spin-findTags" style="display: none;"
+                                                class="spinner-border spinner-border-sm"
+                                                role="status">
+                                                <span class="sr-only">Chargement...</span>
+                                        </div>
+                                </div>
+                        </div>
+
+                        <div class="ui-widget">
+                                <input class="form-control" id="findTags" size="30" 
+                                placeholder="saisir votre recherche"
+                                aria-label="Trouver un concept" aria-describedby="btnFindConcept" >
+                        </div>
+                </div>
+        </div>
+
 </div>
-<p id='tlCpt'></p>
-<div id="cartoAxes">
-        <svg>
-                <defs>
-                        <linearGradient id="linear-gradient" y1="0.5" x2="1" y2="0.5" gradientUnits="objectBoundingBox">
-                                <stop offset="0" stop-color="#54d6ff"></stop>
-                                <stop offset="1" stop-color="#5fff84"></stop>
-                        </linearGradient>
-                        <linearGradient id="linear-gradient-2" x1="0.005" y1="0.585" x2="0.991" y2="0.585"
-                                xlink:href="#linear-gradient">
-                        </linearGradient>
-                        <linearGradient id="center-gradient" x1="0.717" y1="1" x2="0" y2="1"
-                                gradientUnits="objectBoundingBox">
-                                <stop offset="0" stop-color="#5ffd8a"></stop>
-                                <stop offset="0.65" stop-color="#58e6ce"></stop>
-                                <stop offset="1" stop-color="#55daf2"></stop>
-                        </linearGradient>
-                        <linearGradient id="degraxeH" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop stop-color="rgb(173, 158, 253)" offset="0%"></stop>
-                                <stop stop-color="rgb(252, 161, 205)" offset="100%"></stop>
-                        </linearGradient>
-                        <linearGradient id="degraxeV" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop stop-color="rgb(3, 246, 162)" offset="0%"></stop>
-                                <stop stop-color="rgb(84, 214, 255)" offset="100%"></stop>
-                        </linearGradient>
-                </defs>
-        </svg>
+<div id='tlCpt'></div>
+
+<div class="cartoSem" id="cartoSonar"></div>
+
+<div class="cartoSem" id='cartoExploskos'></div>      
+
+<div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h5 class="modal-title" id="ajoutConceptLabel"></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                        <div class="modal-body">
+
+                                <div id="contAddCptRapports" class="container">
+                                        <div class="row">
+                                                <div class="col-sm">
+
+                                                        <div class="ui-widget">
+                                                                <label for="tags">Sélectionner un concept :</label>
+                                                                <div id="spin-tags" style="display: none;"
+                                                                        class="spinner-border spinner-border-sm"
+                                                                        role="status">
+                                                                        <span class="sr-only">Chargement...</span>
+                                                                </div>
+                                                                <input class="form-control" id="tags" size="64">
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div class="row">
+                                                <div class="col-sm">
+                                                        <div class="dropdown-divider"></div>
+                                                </div>
+                                        </div>
+
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                                <a href="#" class="btn btn-dark disabled" tabindex="-1" role="button" 
+                                        id="modalBtnValiderRapports" aria-disabled="true">Valider</a>
+                        </div>
+                </div>
+        </div>
+</div>
+
+<!-- Fenêtre modale pour le temps de chargement -->
+<div class="modal fade" id="modWait" tabindex="-1" role="dialog" aria-labelledby="modWaitLbl" aria-hidden="true">
+<div class="modal-dialog modal-full" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+                <h5 class="modal-title" id="modWaitLbl">Merci de patienter...</h5>
+        </div>
+        <div class="modal-body" style="height: 180px;">
+                <div id="waitloader" style="display:block;"></div>
+                <div id="waitError" style="height: 100px;overflow:scroll;" ></div>
+        </div>
+        <div class="modal-footer">
+                <button id="waitFermer" type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+        </div>
+        </div>
+</div>
 </div>
 
        
 <script>
-        var container, svg, width, height;
+        const urlAutoComplete = "<?php echo $urls['autoComplete'];?>", urlAutoCompleteRedir = "explorer-concept?concept=",
+                urlSendRapports = '<?php echo $urlSendRapports; ?>',
+                urlDataSonar = '<?php echo $urlDataSonar; ?>',
+                flux = '<?php echo $flux; ?>',
+                actant = <?php echo json_encode($actant); ?>,
+                rtRapport = "<?php echo $rtRapport->id();?>",
+                rtSonar = "<?php echo $rtSonar->id();?>";
+        var rapports=<?php echo json_encode($cptRapports);?>,
+        item = <?php echo json_encode($item);?>, 
+        cribles = <?php echo json_encode($cribles);?>, selectCrible,
+        cartos = <?php echo json_encode($cartos);?>, selectCarto, 
+        container, width, height, geo;      
+
         window.onload = function() { 
+
+                mHaut = d3.select('nav').node().clientHeight;
+                
+                d3.select("#btnLink").on("click",ajoutSkos);
+                d3.select("#modalBtnValiderRapports").on("click",sendrapports);
+
                 container = d3.select(".container");
-                svg = d3.select("#cartoAxes svg");
                 width = container.node().clientWidth;
                 height= window.innerHeight - container.node().clientHeight;
-                showCartoAxe(<?php echo json_encode($item);?>); 
+
+                //création de la liste des axes
+                d3.select("#ddCribles").selectAll('a').data(cribles).enter()
+                        .append('a')
+                        .attr('class',"dropdown-item choixCrible")
+                        .style('cursor','pointer')
+                        .text(d=>d.item['o:title'])
+                        .on('click',d=>showCrible(d));
+
+                //création de la liste des cartographies
+                d3.select("#ddCartos").selectAll('a').data(cartos).enter()
+                        .append('a')
+                        .attr('class',"dropdown-item choixCrible")
+                        .style('cursor','pointer')
+                        .text(
+                                d=>d['o:title'])
+                        .on('click',d=>showCarto(d));
+
+                //initialisation des autocomplétion
+                setAutoComplete('tags');
+                setAutoComplete('findTags');
+
+                //récupère la géolocalisation de l'utilisateur
+                if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(p){
+                        geo = p;
+                });
+                }
+
+                //affichage de la carte exploSkos
+                showCarto(cartos[1]);
+
+
         };
 
-        function showCartoAxe(item) {
-            //récupère la taille du conteneur
-            let c = document.getElementById('cartoAxes');
-            //calcul les tailles
-            let w = width,
-                h = height; //w = c.clientWidth, h = c.clientHeight,        
-            
-            //ajoute le svg global
-            svg.attr("id", "svgGlobal")
-                .attr("width", w)
-                .attr("height", h);
-
-            //liste des axes
-            let urlCpt = <?php echo json_encode($lstItemCrible); ?> 
-                ,lbl,id,lblP,idP;
-            //ajoute la carto axe            
-            lstItemCrible = [];
-            urlCpt.forEach(function(d){
-                lbl = d['skos:prefLabel'][0]['@value'];
-                id = d['o:id'];
-                lblP = d['skos:inScheme'][0]['display_title'];
-                idP = d['skos:inScheme'][0]['value_resource_id'];
-                lstItemCrible.push({'label':lbl,'id':id,'idP':idP,'labelP':lblP});
-            });
-
-            ca = new cartoaxes({
-                'idSvg': 'svgGlobal',
-                'tick': 0,
-                'idDoc': id,
-                'urlData':'../sonar/flux?q=getEvalsOmk',
-                'typeSrc':'IIIF',
-                'inScheme':lblP,
-                'crible': lstItemCrible,
-                //'fctGetGrad': pc.getInstantColors,
-                'fctSavePosi': savePosi,
-                'width': w,
-                'height': h
-                });
+        function showCarto(carto){
+                selectCarto = carto;
+                d3.select('#btnChoixCarto').text(carto['o:title']);
+                d3.selectAll('.cartoSem').style('display','none');
+                switch (carto['schema:potentialAction'][0]['@value']) {
+                        case 'Sonar':
+                                if(selectCrible)showCartoSonar(selectCrible);                                
+                                break;                
+                        case 'Exploskos':
+                                showCartoExploskos();                                
+                                break;                
+                }
         }
 
-        function savePosi(o){
-                console.log(o);
+        function showCrible(crible){
+                selectCrible = crible;
+                d3.select('#btnChoixCrible').text(crible.item['o:title']);
+                if(crible.cartos.length==1)showCarto(crible.cartos[0]);
+        }
+
+        function showCartoExploskos() {
+                d3.select('#btnChoixCrible').text("...");
+                d3.select('#cartoExploskos').style('display','block');
+                if(!cartoExploSkos){
+                        //construction de la cartographie
+                        cartoExploSkos = new exploskos({
+                                'idCont': 'cartoExploskos',
+                                'margin': {top: mHaut, right: 10, bottom: 10, left: 5},            
+                                'data': <?php echo json_encode($dataReseauConcept); ?>,
+                                'fctAjoutSkos':ajoutSkos,
+                                });
+                        d3.select("#btnLink").on("click",ajoutSkos);
+                        d3.select("#modalBtnValiderRapports").on("click",sendrapports);
+                }
+
+        }
+
+        function showCartoSonar(crible) {
+            
+                d3.select("#cartoSonar").select('svg').remove();
+                d3.select('#cartoSonar').style('display','block');
+            //ajoute le svg global
+            let svg = d3.select("#cartoSonar").append('svg');
+            svg.attr("id", "svgGlobal")
+                .attr("width", width)
+                .attr("height", height);
+                
+                //supprime les anciens graphe
+                svg.selectAll('g').remove();
+
+
+            //ajoute la polar clock
+            oPolarclock = new polarclock({
+                'idSvg': 'svgGlobal',
+                'spacing': 0.000001,
+                'width': width,
+                'height': height,
+                'chrono': true,
+                'nbCouche': 6
+                });
+
+            //liste des axes
+            lstItemCrible = crible.concepts.map(d => {
+                return {'label':d['o:title'],'id':d['o:id'],'idP':crible.item['o:title'],'labelP':crible.item['o:id']};
+            });
+            //ajoute la carto axe            
+            oCartoaxes = new cartoaxes({
+                'idSvg': 'svgGlobal',
+                'tick': 0,
+                'idDoc': item['o:id'],
+                'urlData':urlDataSonar+crible.item['o:id'],
+                'typeSrc':'IIIF',
+                'hasRatingSystem':crible.item['o:id'],
+                'crible': lstItemCrible,
+                'fctGetGrad': oPolarclock.getInstantColors,
+                'fctSavePosi': savePosi,
+                'width': width,
+                'height': height
+                });
+
         }
 
 
@@ -149,11 +349,6 @@ function docShowHide(){
 d3.select('#btnShowHideDoc').on('click',docShowHide);
 docShowHide();
 
-d3.select('#btnEditer').on('click',cptShowEditer);
-function cptShowEditer(){
-        var url = '<?php echo $urlPage.'editer-concept?idConcept='.$item->id(); ?>';
-        window.location = url;
-}
 
 </script>
 

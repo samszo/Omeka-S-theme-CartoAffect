@@ -10,6 +10,7 @@
         this.margin = params.margin ? params.margin : {top: 10, right: 10, bottom: 10, left: 0},            
         this.data = params.data ? params.data : [];
         this.dataUrl = params.dataUrl ? params.dataUrl : false;
+        this.urlDetails = params.urlDetails ? params.urlDetails : "explorer-concept?concept=";        
         this.dataType = params.dataType ? params.dataType : 'json';
         this.width = params.width ? params.width : 0,
         this.height = params.height ? params.height : 0,
@@ -20,7 +21,7 @@
         this.fontSize = params.fontSize ? params.fontSize : 14;
         this.noeudBase;
 
-        var svg, container, color, colorSkos, tooltip, graph, edgeColor = "path";            
+        var svg, container, color, colorSkos, tooltip, graph, edgeColor = "path", legende, lgdSize;            
 
 
         this.init = function () {
@@ -30,6 +31,7 @@
                 me.width = nodeCont.clientWidth - me.margin.left - me.margin.right;
             if(!me.height)
                 me.height = window.innerHeight - nodeCont.offsetTop - me.margin.top - me.margin.bottom;
+            lgdSize = {x: 0, y:0, width: me.width, height: me.fontSize*4};
 
             color = d3.scaleSequential().domain([me.width, 0]).interpolator(d3['interpolateInferno']),
             colorSkos = d3.scaleOrdinal(d3.schemeCategory10);
@@ -38,6 +40,16 @@
                 .attr("width", me.width+'px')
                 .attr("height", me.height+'px')
                 .style("background-color","black");                
+            //ajoute la légende
+            legende = svg.append('g').attr('id','exploskosLegende')
+            legende.append('rect')
+              .attr("x", 0)
+              .attr("y", 0)
+              .attr("fill", 'black')
+              .attr("height", lgdSize.height)
+              .attr("width", lgdSize.width)
+
+            //création du conteneur de sankey
             container = svg.append("g");
             
             svg.call(
@@ -51,18 +63,20 @@
                 .linkSort(null)
                 .nodeWidth(10)
                 .nodePadding(20)
-                .extent([[0, 5], [me.width, me.height - 5]])
+                //.extent([[0, 5], [me.width, me.height - 5]]);
+                .extent([[0, lgdSize.height], [me.width, me.height - lgdSize.height]]);
 
             me.draw(false);
 
-            //ajout du tooltip
-            tooltip = d3.select("body").append("div")
-                .attr("class", "tooltip")
-                .style('position','absolute')
-                .style('padding','4px')
-                .style('background-color','black')
-                .style('color','white')
-                .style('pointer-events','none');
+          //ajout du tooltip
+          d3.select(".tooltipExploskos").remove();
+          tooltip = d3.select("body").append("div")
+            .attr("class", "tooltipExploskos")
+            .style('position','absolute')
+            .style('padding','4px')
+            .style('background-color','black')
+            .style('color','white')
+            .style('pointer-events','none');
                 
         }
 
@@ -79,8 +93,10 @@
                 links: me.data.links
               });
             me.noeudBase = nodes[2];
+
             //initialise le graph
             container.selectAll("g").remove();
+            legende.selectAll("g").remove();
 
             const link = container.append("g")
                 .attr("fill", "none")
@@ -140,9 +156,9 @@
               .append("title")
                 .text(d => {
                   let n = d.type=='deb' || d.type=='fin' ? d.name : "";
-                  if(!n){
-                    d.sourceLinks.forEach(l => n+= d.type+'='+d.name)                    
-                  }
+                  if(!n) d.sourceLinks.forEach(
+                    l => n+= l.names.join(' -> ')+'\n')                    
+                  return n;
                 });
               
             //ajoute le texte
@@ -157,10 +173,10 @@
                 .attr("text-anchor", d => d.x0 < me.width / 2 ? "start" : "end")
                 .attr("font-size", d => d.type == "concept" ? me.fontSize*2 : me.fontSize)
                 .style("fill", d => d.type == "concept" ? "white" : "white")
-                .style("cursor","zoom-in")
+                .style("cursor",d => d.type=='deb' || d.type=='fin' ? "none" : "zoom-in")
                 .text(d => d.name)
-                .on('click',d => 
-                  document.location.href="editer-concept?concept="+d.name);
+                .on('click',d => d.type=='deb' || d.type=='fin' ?
+                  console.log(d) : document.location.href=me.urlDetails+d.name);
             /*
             txts.append("tspan")
                 .attr("fill-opacity", 0.7)
@@ -181,6 +197,33 @@
                 .html('<i class="fas fa-search-plus"></i>')
                 .on("click",me.fctAjoutSkos);
             */
+
+            //ajoute la légende
+            let typeNoeud = d3.nest()
+              .key(function(d){
+                  return d.type;
+              }).entries(nodes.filter(d=> d.type!='deb' && d.type!='fin')).map(e => e.key);
+            let scaleLgdHori = d3
+              .scaleBand()
+              .paddingInner(0.2)
+              .domain(typeNoeud)
+              .range([lgdSize.x, lgdSize.width]);            
+            let itemsLgd = legende.selectAll('.ilgd').data(typeNoeud).enter().append('g').attr('class','ilgd');
+            itemsLgd.append('rect')         
+              .attr("x", d => scaleLgdHori(d))
+              .attr("y", lgdSize.height/4)
+              .attr("fill", d => colorSkos(d))
+              .attr("height", lgdSize.height/2)
+              .attr("width", scaleLgdHori.bandwidth());
+            itemsLgd.append('text')         
+              .attr("x", d => scaleLgdHori(d)+scaleLgdHori.bandwidth()/2)
+              .attr("y", lgdSize.height/2 + me.fontSize/2)
+              .attr("text-anchor", "middle")
+              .attr("font-size", me.fontSize)
+              .style("fill", "white")
+              .text(d => d);
+      
+
           }
         
         function fctExecute(p) {

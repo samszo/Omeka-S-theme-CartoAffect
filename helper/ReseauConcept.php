@@ -24,12 +24,13 @@ class ReseauConcept extends AbstractHelper
      * Récupère le réseau skos d'un concept
      *
      * @param o:item                $item       item omeka
+     * @param o:item                $actant     item omeka
      * @param o:resourceTemplate    $rtRapport  ressource template contenant la liste des rapports possible
      * @param int                   $nivMax     pronfondeur du reseau
      * 
      * @return array
      */
-    public function __invoke($item,$rtRapport,$nivMax=false)
+    public function __invoke($item,$actant,$rtRapport,$nivMax=false)
     {
         $this->api = $this->getView()->api();
         if($nivMax)$this->nivMax=$nivMax;
@@ -37,9 +38,11 @@ class ReseauConcept extends AbstractHelper
         //récupère la définition des rapports
         $this->relations = [];
         $pIdLink = false;
+        $pIdCreator = false;
         foreach ($rtRapport->resourceTemplateProperties() as $p) {
                 $oP = $p->property();
                 if($oP->term()=='oa:hasSource')$pIdLink = $oP->id();
+                if($oP->term()=='dcterms:creator')$pIdCreator = $oP->id();
                 //on ne prend pas toutes les propriétés
                 if($oP->id()!=1 && $oP->term()!='oa:hasSource' 
                         && $oP->term()!='dcterms:isReferencedBy' && $oP->term()!='dcterms:creator'){
@@ -49,19 +52,31 @@ class ReseauConcept extends AbstractHelper
         }
 
         //requête pour récupèrer le réseau d'un concept dont il est la source
+        //POUR UN ACTANT DONNÉ
         $this->querySemanticPositionSource = array();
         $this->querySemanticPositionSource['resource_template_id']= $rtRapport->id()."";
         $this->querySemanticPositionSource['property'][0]['property']= $pIdLink."";
         $this->querySemanticPositionSource['property'][0]['type']='res';
         $this->querySemanticPositionSource['property'][0]['text']=$item->id(); 
         $this->querySemanticPositionSource['property'][0]['joiner']="and"; 
+        $this->querySemanticPositionSource['property'][1]['property']= $pIdCreator."";
+        $this->querySemanticPositionSource['property'][1]['type']='res';
+        $this->querySemanticPositionSource['property'][1]['text']=$actant->id(); 
+        $this->querySemanticPositionSource['property'][1]['joiner']="and"; 
         //requête pour récupèrer le réseau d'un concept dont il est la destination
+        //POUR UN ACTANT DONNÉ
         $this->querySemanticPositionTarget = $this->querySemanticPositionSource;
         unset($this->querySemanticPositionTarget['property'][0]['property']);
-        $this->querySemanticPositionTarget['property'][1]['property']= $pIdLink."";
-        $this->querySemanticPositionTarget['property'][1]['type']='nres';
-        $this->querySemanticPositionTarget['property'][1]['text']=$item->id(); 
-        $this->querySemanticPositionTarget['property'][1]['joiner']="and"; 
+        $this->querySemanticPositionTarget['property'][2]['property']= $pIdLink."";
+        $this->querySemanticPositionTarget['property'][2]['type']='nres';
+        $this->querySemanticPositionTarget['property'][2]['text']=$item->id(); 
+        $this->querySemanticPositionTarget['property'][2]['joiner']="and"; 
+        $first = true;
+        foreach ($this->relations as $r) {
+            $prop = ['property'=>$r['id'],'type'=>'res','text'=>$item->id(),'joiner'=> $first ? "and" : "or"];
+            $this->querySemanticPositionTarget['property'][]=$prop;
+            $first=false;
+        }
         
 
         //récupère le réseau d'un concept
@@ -160,6 +175,7 @@ class ReseauConcept extends AbstractHelper
             }
         }
         //ajoute les liens manquants
+        $liensManquants = [];
         foreach ($this->rs['nodes'] as $n) {
             if(!isset($n['liens']))continue;
             //vérifie s'il faut relier au début
@@ -221,10 +237,8 @@ class ReseauConcept extends AbstractHelper
                             $n = $this->ajoutNoeud($arrN);
                             break;
                     }
-                    //ajoute les liens
+                    //ajoute le lien
                     $this->rs['nodes'][$s['id']]['liens'][]=['term'=>$r['term'],'id'=>$n['id'],'target'=>$target];
-                    if($niv == $this->nivMax && $r['dir']=='<')$this->rs['nodes'][$s['id']]['liens'][]=['term'=>$r['term'],'id'=>$this->fin['id'],'target'=>$target];
-                    if($niv == $this->nivMax && $r['dir']=='>')$this->rs['nodes'][$s['id']]['liens'][]=['term'=>$r['term'],'id'=>$this->deb['id'],'target'=>$target];
 
                 }
             }
@@ -266,7 +280,8 @@ class ReseauConcept extends AbstractHelper
     function ajoutLien($s, $t, $v=1){
         if($s['id']==$t['id'])return;
 		if(!isset($this->doublons[$s['id']."_".$t['id']]) && !isset($this->doublons[$t['id']."_".$s['id']])){
-			$this->rs['links'][] = array("source"=>$s['id'],"target"=>$t['id'], 'names'=>[$s['name'],$t['name']],"value"=>$v);
+            $this->rs['links'][] = array("source"=>$s['id'],"target"=>$t['id']
+                , 'names'=>[$s['type'].'='.$s['name'],$t['type'].'='.$t['name']],"value"=>$v);
 			$this->doublons[$s['id']."_".$t['id']] = count($this->rs['links'])-1;						
         }
         if(isset($this->doublons[$s['id']."_".$t['id']])){

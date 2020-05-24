@@ -45,11 +45,11 @@ body{
 .cFond{
   stroke-opacity:0.5;
   fill:none;
-  stroke:url(#center-gradient);
+  stroke:url(#degradCenter);
   stroke-width:3px;
 }
 #orbit1{
-  fill:url(#center-gradient);
+  fill:url(#degradCenter);
   stroke:none;
 }
 #orbit4{
@@ -118,4 +118,24 @@ body{
 }
 #txtFctCon{
   text-anchor: middle;
+}
+
+.ui-autocomplete { z-index:2147483647; }
+.findTerm {
+        color:red;
+        font-weight: bold;
+}
+.modal-header{background-color: black;}
+.modal-body{background-color: black;}
+.modal-footer{background-color: black;}
+.alertRapport {
+        display:none;
+        height:30px;
+        line-height:30px;
+        margin-top:4px;
+        margin-bottom:1px;
+        padding:0px 15px;
+}
+.choixCrible {
+  color:red;
 }

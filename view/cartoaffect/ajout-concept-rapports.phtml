@@ -6,14 +6,27 @@ $idRt = $this->params()->fromPost('idRt', '');
 $user = $this->identity();
 
 //création des rapports
-$dt = $this->CartoAffectFactory(['user'=>$user, 'idCpt'=>$idConcept, 'rapports'=>$rapports]);
+$ca = $this->CartoAffectFactory(['user'=>$user, 'idCpt'=>$idConcept, 'rapports'=>$rapports
+  , 'idRt'=>$idRt
+  //TODO:retrouver les themeSetting dans le module
+  , 'themeSetting'=>['rt_idRapport'=>$this->themeSetting('rt_idRapport'),'rt_idSonar'=>$this->themeSetting('rt_idSonar')]
+  ]);
 
-//récup§re le réseau de concept
-$rt =  $this->api()->read('resource_templates', $idRt)->getContent();
-$item = $this->api()->read('items', $idConcept)->getContent();
-$rc = $this->ReseauConcept($item, $rt);
+//traitement suivant le ressource template
+switch ($idRt) {
+  case $this->themeSetting('rt_idRapport'):
+    //récupère le réseau de concept
+    $rt =  $this->api()->read('resource_templates', $idRt)->getContent();
+    $item = $this->api()->read('items', $idConcept)->getContent();
+    $result = $this->ReseauConcept($item, $ca['actant'], $rt);
+    break;
+  case $this->themeSetting('rt_idSonar'):
+    //récupère les positions pour le concepts
+    $result = [];
+    break;
+}
 
-echo json_encode($rc);
+echo json_encode($result);
 
 
 ?>
