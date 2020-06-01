@@ -25,10 +25,12 @@ $urlPage = $site->slug()."/page/";
       <div class="card-header">Documents</div>
       <div class="card-body">
         <h5 class="card-title">Explorez les documents</h5>
-        <p class="card-text">....</p>
+        <p class="card-text"></p>
       </div>
       <div class="card-footer">
-        <a href="#" class="btn btn-dark">C'est ici</a>
+        <nav class="nav"> 
+          <a href="<?php echo $urlPage.'explorer-document'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="fas fa-search"></i></a>
+        </nav>
       </div>      
     </div>
   </div>
@@ -48,14 +50,15 @@ $urlPage = $site->slug()."/page/";
     <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
       <div class="card-header">Concepts</div>
       <div class="card-body">
-        <p class="card-text">Ils sont la formalisation d'une intuition</p>
-        <nav class="nav"> 
-          <a href="<?php echo $urlPage.'explorer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="fab fa-wpexplorer"></i></a>
-          <a href="<?php echo $urlPage.'editer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="far fa-edit"></i></a>        
-        </nav>
-      
+        <p class="card-text">Ils sont la formalisation d'une intuition.</p>      
       </div>
       <div class="card-footer">
+        <nav class="nav"> 
+          <a href="<?php echo $urlPage.'explorer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="fas fa-search"></i></a>
+          <!--
+          <a href="<?php echo $urlPage.'editer-concept'; ?>" style="margin-top: 2px;" class="btn btn-secondary btn-lg"><i class="far fa-edit"></i></a>        
+          -->
+        </nav>
       </div>      
     </div>
   </div>

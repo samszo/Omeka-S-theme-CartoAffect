@@ -1,33 +1,37 @@
 <?php
 
 $translate = $this->plugin('translate');
+//TODO: récupérer le nom de la page
+$flux = "explorer-document";
 
-$item = $this->getItem('concept');
+$item = $this->getItem('document');
 
 //récupère les utiles de la page
 $props = $this->pageProps();
-$urls = $this->pageUrls($props, $item, 'concept');
+$urls = $this->pageUrls($props,$item,'document');
 
 //récupère la collection des cribles
 $itemSetCrible = $this->themeSetting('item_set_id_crible');
 $cribles = $this->Crible($itemSetCrible);
-//récupère l'historique des usages du concept
-$dataTimeline = $this->HistoConcept($item->id());
-//récupère la liste des cartographies
-$cartos =  $this->api()->search('items', ['resource_template_id' => $props['rtCartoSemantique']->id()])->getContent();
+
+//récupère la liste des cartographies pour cette page
+$param = array();
+$cartos =  $this->api()->search('items'
+        , ['resource_template_id' => $props['rtCartoSemantique']->id()
+        ,'property'=>[['property'=>$props['schema:target']->id(),'type'=>'eq','text'=>$flux]]
+        ],['sort_by'=>'jdc:ordreCrible']
+        )->getContent();
+//TODO:classer directement dans la requête et pas dans le javascript
 
 //récupère l'actant 
 $ca = $this->CartoAffectFactory(['user'=>$this->identity(),'itemCpt'=>$item]);
 $actant = $ca['actant'];
 
-//TODO:mettre un sélecteur de ressource template dans les settings du thème
-//récupère la définition des rapports
-//et le réseau du concept
-$rc = $this->ReseauConcept($item, $actant, $props['rtRapport']);
-$dataReseauConcept=$rc['dataReseauConcept'];
-$cptRapports=$rc['cptRapports'];
+//récupère le réseau du document
+$reseau = $this->ReseauDocument($item,$actant);
 
-$flux = "explorer-concept";
+//récupère l'historique des usages du document
+$dataTimeline = $this->HistoDocument($item, $props);
 
 
 ?>
@@ -41,19 +45,13 @@ $flux = "explorer-concept";
 
                 <div class="btn-group" role="group" aria-label="Outils d'édition des concepts">
 
-                        <a id='btnShowHideDoc' href="#" type="button"
+                        <a id='btnShowHideTimeline' href="#" type="button"
                                 class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
                                 title="Afficher l'historique des usages">
                                 <i class="fas fa-history"></i></a>
-                        <!--                                                                        
-                        <a id='btnEditer' href="<?php echo 'editer-concept?concept='.$item->displayTitle(); ?>" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="modifier le concept">
-                                <i class="fas fa-edit"></i></a>
-                        -->
                         <a id='btnEdit' href="<?php echo $item->adminUrl('edit');?>" type="button"
                                 class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="modifier le concept">
+                                title="modifier le document">
                                 <i class="fas fa-edit"></i></a>
                         <button id='btnLink' type="button" class="btn btn-dark btn-sm" data-toggle="tooltip"
                                 data-placement="bottom" title="relier le concept">
@@ -86,8 +84,8 @@ $flux = "explorer-concept";
                 <div class="input-group">
                         <div class="input-group-prepend">
                                 <div class="input-group-text" id="btnFindConcept">
-                                        <i id="icon-findTags" class="fas fa-search"></i>
-                                        <div id="spin-findTags" style="display: none;"
+                                        <i id="icon-findDocs" class="fas fa-search"></i>
+                                        <div id="spin-findDocs" style="display: none;"
                                                 class="spinner-border spinner-border-sm"
                                                 role="status">
                                                 <span class="sr-only">Chargement...</span>
@@ -96,19 +94,21 @@ $flux = "explorer-concept";
                         </div>
 
                         <div class="ui-widget">
-                                <input class="form-control" id="findTags" size="30" 
+                                <input class="form-control" id="findDocs" size="30" 
                                 placeholder="saisir votre recherche"
-                                aria-label="Trouver un concept" aria-describedby="btnFindConcept" >
+                                aria-label="Trouver un document" aria-describedby="btnFindDocument" >
                         </div>
                 </div>
         </div>
 
 </div>
-<div id='tlCpt'></div>
+<div id='tlGraph'></div>
 
 <div class="cartoSem" id="cartoSonar"></div>
 
-<div class="cartoSem" id='cartoExploskos'></div>      
+<div class="cartoSem" id='cartoExploskos'></div>
+
+<div class="cartoSem" id='cartoReseau'></div>
 
 <div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
         aria-hidden="true">
@@ -181,12 +181,10 @@ $flux = "explorer-concept";
                 rtRapport = "<?php echo $props['rtRapport']->id();?>",
                 rtSonar = "<?php echo $props['rtSonar']->id();?>";
         flux = '<?php echo $flux; ?>';
-
-
-        var rapports=<?php echo json_encode($cptRapports);?>,
-        item = <?php echo json_encode($item);?>, 
+        var item = <?php echo json_encode($item);?>, 
         cribles = <?php echo json_encode($cribles);?>, selectCrible,
-        cartos = <?php echo json_encode($cartos);?>, selectCarto, 
+        cartos = <?php echo json_encode($cartos);?>, selectCarto,
+        dtReseau = <?php echo json_encode($reseau);?>,
         container, width, height, geo;      
 
         window.onload = function() { 
@@ -208,6 +206,10 @@ $flux = "explorer-concept";
                         .text(d=>d.item['o:title'])
                         .on('click',d=>showCrible(d));
 
+                //tri la liste des cartographie
+                cartos.sort((a, b) => 
+                        parseInt(a["jdc:ordreCrible"][0]["@value"]) - parseInt(b["jdc:ordreCrible"][0]["@value"])
+                        )                        
                 //création de la liste des cartographies
                 d3.select("#ddCartos").selectAll('a').data(cartos).enter()
                         .append('a')
@@ -216,10 +218,12 @@ $flux = "explorer-concept";
                         .text(
                                 d=>d['o:title'])
                         .on('click',d=>showCarto(d));
+                //on affiche la cartoReseau par défaut
+                showCarto(cartos[0]);
 
                 //initialisation des autocomplétion
                 setAutoComplete('tags');
-                setAutoComplete('findTags');
+                setAutoComplete('findDocs');
 
                 //récupère la géolocalisation de l'utilisateur
                 if (navigator.geolocation) {
@@ -227,10 +231,6 @@ $flux = "explorer-concept";
                         geo = p;
                 });
                 }
-
-                //affichage de la carte exploSkos
-                showCarto(cartos[1]);
-
 
         };
 
@@ -245,6 +245,26 @@ $flux = "explorer-concept";
                         case 'Exploskos':
                                 showCartoExploskos();                                
                                 break;                
+                        case 'Reseau':
+                                showCartoReseau();                                
+                                break;                
+                }
+        }
+
+        function showCartoReseau(){
+                d3.select("#cartoReseau").select('svg').remove();
+                d3.select('#cartoReseau').style('display','block');
+                var r = new reseau({'idCont':'cartoReseau','width':width,'height':height
+                                ,'data':dtReseau, 'fctClickNode':showNode});
+        }
+        function showNode(n){
+                switch (n.group) {
+                        case 'Concept':
+                                document.location.href="explorer-concept?id="+n.id;                         
+                                break;        
+                        default:
+                                document.location.href="explorer-document?id="+n.id; 
+                                break;
                 }
         }
 
@@ -252,23 +272,6 @@ $flux = "explorer-concept";
                 selectCrible = crible;
                 d3.select('#btnChoixCrible').text(crible.item['o:title']);
                 if(crible.cartos.length==1)showCarto(crible.cartos[0]);
-        }
-
-        function showCartoExploskos() {
-                d3.select('#btnChoixCrible').text("...");
-                d3.select('#cartoExploskos').style('display','block');
-                if(!cartoExploSkos){
-                        //construction de la cartographie
-                        cartoExploSkos = new exploskos({
-                                'idCont': 'cartoExploskos',
-                                'margin': {top: mHaut, right: 10, bottom: 10, left: 5},            
-                                'data': <?php echo json_encode($dataReseauConcept); ?>,
-                                'fctAjoutSkos':ajoutSkos,
-                                });
-                        d3.select("#btnLink").on("click",ajoutSkos);
-                        d3.select("#modalBtnValiderRapports").on("click",sendrapports);
-                }
-
         }
 
         function showCartoSonar(crible) {
@@ -316,31 +319,19 @@ $flux = "explorer-concept";
 
         }
 
-
-var dataTimeline = <?php echo json_encode($dataTimeline); ?>;
-var tl = TimelinesChart()(d3.select('#tlCpt').node())
+  var dataTimeline = <?php echo json_encode($dataTimeline); ?>;
+  var tl = TimelinesChart()(d3.select('#tlGraph').node())
                 .zQualitative(true)
                 .onLabelClick(function(l,g){
-                        var t = d3.select('#tlCpt svg');
+                        var t = d3.select('#tlGraph svg');
                         t.style('display','none');
                         let dtl = getTimelineLabelData(l,g);
                         console.log(dtl);
                         document.location.href="explorer-document?id="+dtl['o:id']; 
                 })
                 .data(dataTimeline);
-function docShowHide(){
-        var tld = d3.select('#tlCpt svg')
-        if(tld.style('display')=='none'){
-                tld.style('display','inline')
-                d3.select('#btnShowHideDoc').attr('class','btn btn-ligth btn-sm');                        
-        }else{
-                tld.style('display','none');
-                d3.select('#btnShowHideDoc').attr('class','btn btn-dark btn-sm');                        
-        } 
-}
-d3.select('#btnShowHideDoc').on('click',docShowHide);
-docShowHide();
-
+  d3.select('#btnShowHideTimeline').on('click',timelineShowHide);
+  timelineShowHide();
 
 </script>
 

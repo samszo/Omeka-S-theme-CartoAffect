@@ -1,4 +1,4 @@
-var searchTerm, mHaut, cptRapports=[], cartoExploSkos, oPolarclock, oCartoaxes;
+var flux, searchTerm, mHaut, cptRapports=[], cartoExploSkos, oPolarclock, oCartoaxes;
 
 
 function setAutoComplete(id){
@@ -40,6 +40,7 @@ function setAutoComplete(id){
                   select: function (event, ui) {
                           if(id=='tags') drawRapport(ui.item);
                           if(id=='findTags') document.location.href=urlAutoCompleteRedir+ui.item.value;
+                          if(id=='findDocs') document.location.href=urlAutoCompleteRedir+ui.item.id;
                           this.value = "";
                           return false;
                   },
@@ -282,3 +283,21 @@ function setAutoComplete(id){
         });
 
 }
+
+function getTimelineLabelData(l,g){
+        let dataG = dataTimeline.filter(grp=>grp.group==g)[0];
+        let dataL = dataG.data.filter(lgn=>lgn.label==l)[0];
+        return dataL;
+}
+
+function timelineShowHide(){
+        let tld = d3.select('#tlGraph svg')
+        if(tld.style('display')=='none'){
+                tld.style('display','block')
+                d3.select('#btnShowHideTimeline').attr('class','btn btn-ligth btn-sm');                        
+        }else{
+                tld.style('display','none');
+                d3.select('#btnShowHideTimeline').attr('class','btn btn-dark btn-sm');                        
+        } 
+}
+

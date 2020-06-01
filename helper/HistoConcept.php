@@ -55,6 +55,7 @@ class HistoConcept extends AbstractHelper
           */
           $valid = rand(0, 3) > 1 ? 'valide' : '404';
           $label = ['label'=>$item->displayTitle()
+            ,'o:id'=>$item->id()
             ,'data'=>[['timeRange'=>[$dC, $dS],'val'=>$valid]]
           ];
           array_push($labels,$label); 
