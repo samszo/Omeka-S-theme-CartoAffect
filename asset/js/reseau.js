@@ -110,7 +110,8 @@ class reseau {
                     .attr("r", function(d) { 
                         return d.size ? 5*d.size : 5; 
                     })
-                    .attr("fill", function(d) { return color(d.group); })
+                    .style("cursor","zoom-in")
+                    .attr("fill", function(d) { return color(d.group); });
                 
                 node.on("mouseover", focus)
                     .on("mouseout", unfocus)

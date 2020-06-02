@@ -121,8 +121,8 @@ class HistoDocument extends AbstractHelper
             $dS = $item->created()->format('Y-m-d H:i:sP');  
           }elseif($pDate=='o:modified'){
             $dS =$item->modified()->format('Y-m-d H:i:sP');  
-          }else
-            $dS = $item->value($pDate)->asHtml();
+          }else 
+            $dS = $item->value($pDate) ? $item->value($pDate)->asHtml() : $item->value('dcterms:created')->asHtml();
           /*TODO:gérer les dates de suppression d'activité
           */
           //calcul la période pour un affichage plus lisible
