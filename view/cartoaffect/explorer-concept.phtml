@@ -2,6 +2,7 @@
 
 $translate = $this->plugin('translate');
 
+$flux = "explorer-concept";
 $item = $this->getItem('concept');
 
 //récupère les utiles de la page
@@ -13,8 +14,13 @@ $itemSetCrible = $this->themeSetting('item_set_id_crible');
 $cribles = $this->Crible($itemSetCrible);
 //récupère l'historique des usages du concept
 $dataTimeline = $this->HistoConcept($item->id());
+
 //récupère la liste des cartographies
-$cartos =  $this->api()->search('items', ['resource_template_id' => $props['rtCartoSemantique']->id()])->getContent();
+$cartos =  $this->api()->search('items'
+        , ['resource_template_id' => $props['rtCartoSemantique']->id()
+        ,'property'=>[['property'=>$props['schema:target']->id(),'type'=>'eq','text'=>$flux]]
+        ],['sort_by'=>'jdc:ordreCrible']
+        )->getContent();
 
 //récupère l'actant 
 $ca = $this->CartoAffectFactory(['user'=>$this->identity(),'itemCpt'=>$item]);
@@ -27,320 +33,56 @@ $rc = $this->ReseauConcept($item, $actant, $props['rtRapport']);
 $dataReseauConcept=$rc['dataReseauConcept'];
 $cptRapports=$rc['cptRapports'];
 
-$flux = "explorer-concept";
-
-
 ?>
-<div class="alert alert-dark text-center" role="alert">
-        <h4 class="alert-heading"><?php echo $item->link($item->displayTitle(),null,['class'=>'alert-link']); ?></h4>
-        <?php if ($description = $item->displayDescription()): ?>
-        <div class="description"><?php echo $description; ?></div>
-        <?php endif; ?>
-        <hr>
-        <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Gestion des concepts">
 
-                <div class="btn-group" role="group" aria-label="Outils d'édition des concepts">
 
-                        <a id='btnShowHideDoc' href="#" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="Afficher l'historique des usages">
-                                <i class="fas fa-history"></i></a>
-                        <!--                                                                        
-                        <a id='btnEditer' href="<?php echo 'editer-concept?concept='.$item->displayTitle(); ?>" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="modifier le concept">
-                                <i class="fas fa-edit"></i></a>
-                        -->
-                        <a id='btnEdit' href="<?php echo $item->adminUrl('edit');?>" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="modifier le concept">
-                                <i class="fas fa-edit"></i></a>
-                        <button id='btnLink' type="button" class="btn btn-dark btn-sm" data-toggle="tooltip"
-                                data-placement="bottom" title="relier le concept">
-                                <i class="fas fa-link"></i></button>
+<?php echo $this->partial('cartoaffect/menu-haut', ['item'=>$item]);?>
 
-                </div>
-                <div class="btn-group" role="group" aria-label="Outils d'évaluation des concepts">
-                        <div class="btn-group">
-                                <button id='btnCribles' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                cribles
-                                </button>
-                                <div id='ddCribles' class="dropdown-menu" aria-labelledby="btnCribles">
-                                </div>
-                        </div>
-                        <button id='btnChoixCrible' class="btn btn-light btn-sm" type="button" >
-                                ...
-                        </button>
-                        <div class="btn-group">
-                                <button id='btnCartos' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                cartographies
-                                </button>
-                                <div id='ddCartos' class="dropdown-menu" aria-labelledby="btnCartos">
-                                </div>
-                        </div>
-                        <button id='btnChoixCarto' class="btn btn-light btn-sm" type="button" >
-                                ...
-                        </button>
-                </div>
-
-                <div class="input-group">
-                        <div class="input-group-prepend">
-                                <div class="input-group-text" id="btnFindConcept">
-                                        <i id="icon-findTags" class="fas fa-search"></i>
-                                        <div id="spin-findTags" style="display: none;"
-                                                class="spinner-border spinner-border-sm"
-                                                role="status">
-                                                <span class="sr-only">Chargement...</span>
-                                        </div>
-                                </div>
-                        </div>
-
-                        <div class="ui-widget">
-                                <input class="form-control" id="findTags" size="30" 
-                                placeholder="saisir votre recherche"
-                                aria-label="Trouver un concept" aria-describedby="btnFindConcept" >
-                        </div>
-                </div>
-        </div>
-
-</div>
-<div id='tlCpt'></div>
+<div id='tlGraph'></div>
 
 <div class="cartoSem" id="cartoSonar"></div>
 
-<div class="cartoSem" id='cartoExploskos'></div>      
+<div class="cartoSem" id='cartoExploskos'></div>
 
-<div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h5 class="modal-title" id="ajoutConceptLabel"></h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                </button>
-                        </div>
-                        <div class="modal-body">
+<div class="cartoSem" id='cartoReseau'></div>
 
-                                <div id="contAddCptRapports" class="container">
-                                        <div class="row">
-                                                <div class="col-sm">
 
-                                                        <div class="ui-widget">
-                                                                <label for="tags">Sélectionner un concept :</label>
-                                                                <div id="spin-tags" style="display: none;"
-                                                                        class="spinner-border spinner-border-sm"
-                                                                        role="status">
-                                                                        <span class="sr-only">Chargement...</span>
-                                                                </div>
-                                                                <input class="form-control" id="tags" size="64">
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="row">
-                                                <div class="col-sm">
-                                                        <div class="dropdown-divider"></div>
-                                                </div>
-                                        </div>
+<?php echo $this->partial('cartoaffect/modal-skos', []);?>
 
-                                </div>
-                        </div>
-                        <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-                                <a href="#" class="btn btn-dark disabled" tabindex="-1" role="button" 
-                                        id="modalBtnValiderRapports" aria-disabled="true">Valider</a>
-                        </div>
-                </div>
-        </div>
-</div>
+<?php echo $this->partial('cartoaffect/modal-wait', []);?>
 
-<!-- Fenêtre modale pour le temps de chargement -->
-<div class="modal fade" id="modWait" tabindex="-1" role="dialog" aria-labelledby="modWaitLbl" aria-hidden="true">
-<div class="modal-dialog modal-full" role="document">
-        <div class="modal-content">
-        <div class="modal-header">
-                <h5 class="modal-title" id="modWaitLbl">Merci de patienter...</h5>
-        </div>
-        <div class="modal-body" style="height: 180px;">
-                <div id="waitloader" style="display:block;"></div>
-                <div id="waitError" style="height: 100px;overflow:scroll;" ></div>
-        </div>
-        <div class="modal-footer">
-                <button id="waitFermer" type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-        </div>
-        </div>
-</div>
-</div>
+
 
        
 <script>
-        const urlAutoComplete = "<?php echo $urls['autoComplete'];?>", urlAutoCompleteRedir = "<?php echo $urls['autoCompleteRedir'];?>",
+
+        const urlAutoComplete = "<?php echo $urls['autoComplete'];?>", 
+                urlAutoCompleteRedir = "<?php echo $urls['autoCompleteRedir'];?>",
                 urlSendRapports = '<?php echo $urls['urlSendRapports']; ?>',
                 urlDataSonar = '<?php echo $urls['urlDataSonar']; ?>',
                 actant = <?php echo json_encode($actant); ?>,
                 rtRapport = "<?php echo $props['rtRapport']->id();?>",
                 rtSonar = "<?php echo $props['rtSonar']->id();?>";
         flux = '<?php echo $flux; ?>';
-
-
-        var rapports=<?php echo json_encode($cptRapports);?>,
-        item = <?php echo json_encode($item);?>, 
-        cribles = <?php echo json_encode($cribles);?>, selectCrible,
-        cartos = <?php echo json_encode($cartos);?>, selectCarto, 
-        container, width, height, geo;      
+        item = <?php echo json_encode($item);?>; 
+        cribles = <?php echo json_encode($cribles);?>; 
+        cartos = <?php echo json_encode($cartos);?>;
+        rapports=<?php echo json_encode($cptRapports);?>,
+        dataTimeline = <?php echo json_encode($dataTimeline); ?>,
+        dataReseauConcept = <?php echo json_encode($dataReseauConcept); ?>;
 
         window.onload = function() { 
 
-                mHaut = d3.select('nav').node().clientHeight;
-                
-                d3.select("#btnLink").on("click",ajoutSkos);
-                d3.select("#modalBtnValiderRapports").on("click",sendrapports);
-
-                container = d3.select(".container");
-                width = container.node().clientWidth;
-                height= window.innerHeight - container.node().clientHeight;
-
-                //création de la liste des axes
-                d3.select("#ddCribles").selectAll('a').data(cribles).enter()
-                        .append('a')
-                        .attr('class',"dropdown-item choixCrible")
-                        .style('cursor','pointer')
-                        .text(d=>d.item['o:title'])
-                        .on('click',d=>showCrible(d));
-
-                //création de la liste des cartographies
-                d3.select("#ddCartos").selectAll('a').data(cartos).enter()
-                        .append('a')
-                        .attr('class',"dropdown-item choixCrible")
-                        .style('cursor','pointer')
-                        .text(
-                                d=>d['o:title'])
-                        .on('click',d=>showCarto(d));
+                //initialisation de l'IHM
+                initIHM();
 
                 //initialisation des autocomplétion
                 setAutoComplete('tags');
-                setAutoComplete('findTags');
+                setAutoComplete('findDocs');
 
-                //récupère la géolocalisation de l'utilisateur
-                if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(function(p){
-                        geo = p;
-                });
-                }
-
-                //affichage de la carte exploSkos
-                showCarto(cartos[1]);
-
-
+                //initialisation de la timeline
+                timelineInit();
         };
-
-        function showCarto(carto){
-                selectCarto = carto;
-                d3.select('#btnChoixCarto').text(carto['o:title']);
-                d3.selectAll('.cartoSem').style('display','none');
-                switch (carto['schema:potentialAction'][0]['@value']) {
-                        case 'Sonar':
-                                if(selectCrible)showCartoSonar(selectCrible);                                
-                                break;                
-                        case 'Exploskos':
-                                showCartoExploskos();                                
-                                break;                
-                }
-        }
-
-        function showCrible(crible){
-                selectCrible = crible;
-                d3.select('#btnChoixCrible').text(crible.item['o:title']);
-                if(crible.cartos.length==1)showCarto(crible.cartos[0]);
-        }
-
-        function showCartoExploskos() {
-                d3.select('#btnChoixCrible').text("...");
-                d3.select('#cartoExploskos').style('display','block');
-                if(!cartoExploSkos){
-                        //construction de la cartographie
-                        cartoExploSkos = new exploskos({
-                                'idCont': 'cartoExploskos',
-                                'margin': {top: mHaut, right: 10, bottom: 10, left: 5},            
-                                'data': <?php echo json_encode($dataReseauConcept); ?>,
-                                'fctAjoutSkos':ajoutSkos,
-                                });
-                        d3.select("#btnLink").on("click",ajoutSkos);
-                        d3.select("#modalBtnValiderRapports").on("click",sendrapports);
-                }
-
-        }
-
-        function showCartoSonar(crible) {
-            
-                d3.select("#cartoSonar").select('svg').remove();
-                d3.select('#cartoSonar').style('display','block');
-            //ajoute le svg global
-            let svg = d3.select("#cartoSonar").append('svg');
-            svg.attr("id", "svgGlobal")
-                .attr("width", width)
-                .attr("height", height);
-                
-                //supprime les anciens graphe
-                svg.selectAll('g').remove();
-
-
-            //ajoute la polar clock
-            oPolarclock = new polarclock({
-                'idSvg': 'svgGlobal',
-                'spacing': 0.000001,
-                'width': width,
-                'height': height,
-                'chrono': true,
-                'nbCouche': 6
-                });
-
-            //liste des axes
-            lstItemCrible = crible.concepts.map(d => {
-                return {'label':d['o:title'],'id':d['o:id'],'idP':crible.item['o:title'],'labelP':crible.item['o:id']};
-            });
-            //ajoute la carto axe            
-            oCartoaxes = new cartoaxes({
-                'idSvg': 'svgGlobal',
-                'tick': 0,
-                'idDoc': item['o:id'],
-                'urlData':urlDataSonar+crible.item['o:id'],
-                'typeSrc':'IIIF',
-                'hasRatingSystem':crible.item['o:id'],
-                'crible': lstItemCrible,
-                'fctGetGrad': oPolarclock.getInstantColors,
-                'fctSavePosi': savePosi,
-                'width': width,
-                'height': height
-                });
-
-        }
-
-
-var dataTimeline = <?php echo json_encode($dataTimeline); ?>;
-var tl = TimelinesChart()(d3.select('#tlCpt').node())
-                .zQualitative(true)
-                .onLabelClick(function(l,g){
-                        var t = d3.select('#tlCpt svg');
-                        t.style('display','none');
-                        let dtl = getTimelineLabelData(l,g);
-                        console.log(dtl);
-                        document.location.href="explorer-document?id="+dtl['o:id']; 
-                })
-                .data(dataTimeline);
-function docShowHide(){
-        var tld = d3.select('#tlCpt svg')
-        if(tld.style('display')=='none'){
-                tld.style('display','inline')
-                d3.select('#btnShowHideDoc').attr('class','btn btn-ligth btn-sm');                        
-        }else{
-                tld.style('display','none');
-                d3.select('#btnShowHideDoc').attr('class','btn btn-dark btn-sm');                        
-        } 
-}
-d3.select('#btnShowHideDoc').on('click',docShowHide);
-docShowHide();
 
 
 </script>
-

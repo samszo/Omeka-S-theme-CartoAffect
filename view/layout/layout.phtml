@@ -1,6 +1,6 @@
 <?php
 
-$ajax = $this->params()->fromPost('ajax', '');
+$ajax = $this->params()->fromQuery('ajax') ? $this->params()->fromQuery('ajax') : $this->params()->fromPost('ajax', '');
 if($ajax){
     echo $this->content;
     return ;
@@ -36,6 +36,8 @@ $this->headScript()->appendFile($this->assetUrl('js/cartoaxes.js'));
 $this->headScript()->appendFile($this->assetUrl('js/exploskos.js'));
 $this->headScript()->appendFile($this->assetUrl('js/cartoaffect.js'));
 $this->headScript()->appendFile($this->assetUrl('js/reseau.js'));
+$this->headScript()->appendFile($this->assetUrl('js/matricetriple.js'));
+
 
 $this->trigger('view.layout');
 $userBar = $this->userBar();

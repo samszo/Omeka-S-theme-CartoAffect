@@ -1,0 +1,44 @@
+<!-- fenetre modale d'ajout de skos -->
+<div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                        <div class="modal-header">
+                                <h5 class="modal-title" id="ajoutConceptLabel"></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                </button>
+                        </div>
+                        <div class="modal-body">
+
+                                <div id="contAddCptRapports" class="container">
+                                        <div class="row">
+                                                <div class="col-sm">
+
+                                                        <div class="ui-widget">
+                                                                <label for="tags">Sélectionner un concept :</label>
+                                                                <div id="spin-tags" style="display: none;"
+                                                                        class="spinner-border spinner-border-sm"
+                                                                        role="status">
+                                                                        <span class="sr-only">Chargement...</span>
+                                                                </div>
+                                                                <input class="form-control" id="tags" size="64">
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div class="row">
+                                                <div class="col-sm">
+                                                        <div class="dropdown-divider"></div>
+                                                </div>
+                                        </div>
+
+                                </div>
+                        </div>
+                        <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                                <a href="#" class="btn btn-dark disabled" tabindex="-1" role="button" 
+                                        id="modalBtnValiderRapports" aria-disabled="true">Valider</a>
+                        </div>
+                </div>
+        </div>
+</div>

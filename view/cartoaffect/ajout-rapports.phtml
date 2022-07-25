@@ -17,12 +17,11 @@ switch ($idRt) {
   case $this->themeSetting('rt_idRapport'):
     //récupère le réseau de concept
     $rt =  $this->api()->read('resource_templates', $idRt)->getContent();
-    $item = $this->api()->read('items', $idConcept)->getContent();
-    $result = $this->ReseauConcept($item, $ca['actant'], $rt);
+    $result = $this->ReseauConcept($ca['concept'], $ca['actant'], $rt);
     break;
   case $this->themeSetting('rt_idSonar'):
     //récupère les positions pour le concepts
-    $result = [];
+    $result = $this->PosiSonar($rapports['jdc:hasDoc'][0]['value'], $rapports['ma:hasRatingSystem'][0]['value']);
     break;
 }
 

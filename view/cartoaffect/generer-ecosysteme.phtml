@@ -1,0 +1,48 @@
+<?php
+
+$translate = $this->plugin('translate');
+//TODO: récupérer le nom de la page
+$flux = "generer-ecosysteme";
+
+//récupère les utiles de la page
+$props = $this->pageProps();
+$urls = $this->pageUrls($props,null,'generer');
+
+
+//récupère l'actant 
+$ca = $this->CartoAffectFactory(['user'=>$this->identity()]);
+$actant = $ca['actant'];
+
+
+?>
+
+<div class="cartoSem" id="cartoMatriceTriple"></div>
+
+
+
+<?php echo $this->partial('cartoaffect/modal-wait', []);?>
+
+       
+<script>
+        flux = '<?php echo $flux; ?>';
+
+        initIHM();
+
+
+        //
+        //var viz = d3.select('#cartoMatriceTriple').style('width',width).style('height',height);
+        var m = new matricetriple({'idCont':'cartoMatriceTriple','width':width,'height':height
+        //        ,'matrice':[['dicernement fort','dicernement faible','dicernement vide','choix fort','choix faible','choix vide','agir fort','agir faible','agir vide']]
+        //        ,'matrice':[['dicernement vide','choix fort','choix faible','choix vide','agir fort','agir faible','agir vide']]
+                ,'matrice':[['dicerner','penser','choisir','agir'],['fort','faible','vide']]
+        //        ,'matrice':[['dicerner','penser','choisir','agir','évaluer'],['fort','faible','vide']]
+                //,'matrice':[['dicerner','penser','choisir','agir','évaluer','valoriser'],['fort','faible','vide']]
+        //,'matrice':[['dicernement','choix','agir'],['fort','faible','vide']]
+        //,'matrice':[['vide','vide 1','vide 2'],['fort','faible','vide']]
+        //,'matrice':[['vide','vide 1'],['fort','faible','vide']]
+        //,'matrice':[['vide'],['fort','faible','vide']]
+        });
+
+
+</script>
+

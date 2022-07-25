@@ -35,73 +35,8 @@ $dataTimeline = $this->HistoDocument($item, $props);
 
 
 ?>
-<div class="alert alert-dark text-center" role="alert">
-        <h4 class="alert-heading"><?php echo $item->link($item->displayTitle(),null,['class'=>'alert-link']); ?></h4>
-        <?php if ($description = $item->displayDescription()): ?>
-        <div class="description"><?php echo $description; ?></div>
-        <?php endif; ?>
-        <hr>
-        <div class="btn-toolbar justify-content-between" role="toolbar" aria-label="Gestion des concepts">
+<?php echo $this->partial('cartoaffect/menu-haut', ['item'=>$item]);?>
 
-                <div class="btn-group" role="group" aria-label="Outils d'édition des concepts">
-
-                        <a id='btnShowHideTimeline' href="#" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="Afficher l'historique des usages">
-                                <i class="fas fa-history"></i></a>
-                        <a id='btnEdit' href="<?php echo $item->adminUrl('edit');?>" type="button"
-                                class="btn btn-dark btn-sm" data-toggle="tooltip" data-placement="bottom"
-                                title="modifier le document">
-                                <i class="fas fa-edit"></i></a>
-                        <button id='btnLink' type="button" class="btn btn-dark btn-sm" data-toggle="tooltip"
-                                data-placement="bottom" title="relier le concept">
-                                <i class="fas fa-link"></i></button>
-
-                </div>
-                <div class="btn-group" role="group" aria-label="Outils d'évaluation des concepts">
-                        <div class="btn-group">
-                                <button id='btnCribles' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                cribles
-                                </button>
-                                <div id='ddCribles' class="dropdown-menu" aria-labelledby="btnCribles">
-                                </div>
-                        </div>
-                        <button id='btnChoixCrible' class="btn btn-light btn-sm" type="button" >
-                                ...
-                        </button>
-                        <div class="btn-group">
-                                <button id='btnCartos' class="btn btn-dark btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                cartographies
-                                </button>
-                                <div id='ddCartos' class="dropdown-menu" aria-labelledby="btnCartos">
-                                </div>
-                        </div>
-                        <button id='btnChoixCarto' class="btn btn-light btn-sm" type="button" >
-                                ...
-                        </button>
-                </div>
-
-                <div class="input-group">
-                        <div class="input-group-prepend">
-                                <div class="input-group-text" id="btnFindConcept">
-                                        <i id="icon-findDocs" class="fas fa-search"></i>
-                                        <div id="spin-findDocs" style="display: none;"
-                                                class="spinner-border spinner-border-sm"
-                                                role="status">
-                                                <span class="sr-only">Chargement...</span>
-                                        </div>
-                                </div>
-                        </div>
-
-                        <div class="ui-widget">
-                                <input class="form-control" id="findDocs" size="30" 
-                                placeholder="saisir votre recherche"
-                                aria-label="Trouver un document" aria-describedby="btnFindDocument" >
-                        </div>
-                </div>
-        </div>
-
-</div>
 <div id='tlGraph'></div>
 
 <div class="cartoSem" id="cartoSonar"></div>
@@ -110,67 +45,10 @@ $dataTimeline = $this->HistoDocument($item, $props);
 
 <div class="cartoSem" id='cartoReseau'></div>
 
-<div class="modal fade" id="modalAjoutSkos" tabindex="-1" role="dialog" aria-labelledby="modalAjoutSkos"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                        <div class="modal-header">
-                                <h5 class="modal-title" id="ajoutConceptLabel"></h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                </button>
-                        </div>
-                        <div class="modal-body">
 
-                                <div id="contAddCptRapports" class="container">
-                                        <div class="row">
-                                                <div class="col-sm">
+<?php echo $this->partial('cartoaffect/modal-skos', []);?>
 
-                                                        <div class="ui-widget">
-                                                                <label for="tags">Sélectionner un concept :</label>
-                                                                <div id="spin-tags" style="display: none;"
-                                                                        class="spinner-border spinner-border-sm"
-                                                                        role="status">
-                                                                        <span class="sr-only">Chargement...</span>
-                                                                </div>
-                                                                <input class="form-control" id="tags" size="64">
-                                                        </div>
-                                                </div>
-                                        </div>
-                                        <div class="row">
-                                                <div class="col-sm">
-                                                        <div class="dropdown-divider"></div>
-                                                </div>
-                                        </div>
-
-                                </div>
-                        </div>
-                        <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-                                <a href="#" class="btn btn-dark disabled" tabindex="-1" role="button" 
-                                        id="modalBtnValiderRapports" aria-disabled="true">Valider</a>
-                        </div>
-                </div>
-        </div>
-</div>
-
-<!-- Fenêtre modale pour le temps de chargement -->
-<div class="modal fade" id="modWait" tabindex="-1" role="dialog" aria-labelledby="modWaitLbl" aria-hidden="true">
-<div class="modal-dialog modal-full" role="document">
-        <div class="modal-content">
-        <div class="modal-header">
-                <h5 class="modal-title" id="modWaitLbl">Merci de patienter...</h5>
-        </div>
-        <div class="modal-body" style="height: 180px;">
-                <div id="waitloader" style="display:block;"></div>
-                <div id="waitError" style="height: 100px;overflow:scroll;" ></div>
-        </div>
-        <div class="modal-footer">
-                <button id="waitFermer" type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-        </div>
-        </div>
-</div>
-</div>
+<?php echo $this->partial('cartoaffect/modal-wait', []);?>
 
        
 <script>
@@ -181,157 +59,24 @@ $dataTimeline = $this->HistoDocument($item, $props);
                 rtRapport = "<?php echo $props['rtRapport']->id();?>",
                 rtSonar = "<?php echo $props['rtSonar']->id();?>";
         flux = '<?php echo $flux; ?>';
-        var item = <?php echo json_encode($item);?>, 
-        cribles = <?php echo json_encode($cribles);?>, selectCrible,
-        cartos = <?php echo json_encode($cartos);?>, selectCarto,
-        dtReseau = <?php echo json_encode($reseau);?>,
-        container, width, height, geo;      
+        item = <?php echo json_encode($item);?>; 
+        cribles = <?php echo json_encode($cribles);?>; 
+        cartos = <?php echo json_encode($cartos);?>;
+        dtReseau = <?php echo json_encode($reseau);?>;
+        dataTimeline = <?php echo json_encode($dataTimeline); ?>;
 
         window.onload = function() { 
 
-                mHaut = d3.select('nav').node().clientHeight;
-                
-                d3.select("#btnLink").on("click",ajoutSkos);
-                d3.select("#modalBtnValiderRapports").on("click",sendrapports);
-
-                container = d3.select(".container");
-                width = container.node().clientWidth;
-                height= window.innerHeight - container.node().clientHeight;
-
-                //création de la liste des axes
-                d3.select("#ddCribles").selectAll('a').data(cribles).enter()
-                        .append('a')
-                        .attr('class',"dropdown-item choixCrible")
-                        .style('cursor','pointer')
-                        .text(d=>d.item['o:title'])
-                        .on('click',d=>showCrible(d));
-
-                //tri la liste des cartographie
-                cartos.sort((a, b) => 
-                        parseInt(a["jdc:ordreCrible"][0]["@value"]) - parseInt(b["jdc:ordreCrible"][0]["@value"])
-                        )                        
-                //création de la liste des cartographies
-                d3.select("#ddCartos").selectAll('a').data(cartos).enter()
-                        .append('a')
-                        .attr('class',"dropdown-item choixCrible")
-                        .style('cursor','pointer')
-                        .text(
-                                d=>d['o:title'])
-                        .on('click',d=>showCarto(d));
-                //on affiche la cartoReseau par défaut
-                showCarto(cartos[0]);
+                //initialisation de l'IHM
+                initIHM();
 
                 //initialisation des autocomplétion
                 setAutoComplete('tags');
                 setAutoComplete('findDocs');
 
-                //récupère la géolocalisation de l'utilisateur
-                if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(function(p){
-                        geo = p;
-                });
-                }
-
+                //initialisation de la timeline
+                timelineInit();
         };
-
-        function showCarto(carto){
-                selectCarto = carto;
-                d3.select('#btnChoixCarto').text(carto['o:title']);
-                d3.selectAll('.cartoSem').style('display','none');
-                switch (carto['schema:potentialAction'][0]['@value']) {
-                        case 'Sonar':
-                                if(selectCrible)showCartoSonar(selectCrible);                                
-                                break;                
-                        case 'Exploskos':
-                                showCartoExploskos();                                
-                                break;                
-                        case 'Reseau':
-                                showCartoReseau();                                
-                                break;                
-                }
-        }
-
-        function showCartoReseau(){
-                d3.select("#cartoReseau").select('svg').remove();
-                d3.select('#cartoReseau').style('display','block');
-                var r = new reseau({'idCont':'cartoReseau','width':width,'height':height
-                                ,'data':dtReseau, 'fctClickNode':showNode});
-        }
-        function showNode(n){
-                switch (n.group) {
-                        case 'Concept':
-                                document.location.href="explorer-concept?id="+n.id;                         
-                                break;        
-                        default:
-                                document.location.href="explorer-document?id="+n.id; 
-                                break;
-                }
-        }
-
-        function showCrible(crible){
-                selectCrible = crible;
-                d3.select('#btnChoixCrible').text(crible.item['o:title']);
-                if(crible.cartos.length==1)showCarto(crible.cartos[0]);
-        }
-
-        function showCartoSonar(crible) {
-            
-                d3.select("#cartoSonar").select('svg').remove();
-                d3.select('#cartoSonar').style('display','block');
-            //ajoute le svg global
-            let svg = d3.select("#cartoSonar").append('svg');
-            svg.attr("id", "svgGlobal")
-                .attr("width", width)
-                .attr("height", height);
-                
-                //supprime les anciens graphe
-                svg.selectAll('g').remove();
-
-
-            //ajoute la polar clock
-            oPolarclock = new polarclock({
-                'idSvg': 'svgGlobal',
-                'spacing': 0.000001,
-                'width': width,
-                'height': height,
-                'chrono': true,
-                'nbCouche': 6
-                });
-
-            //liste des axes
-            lstItemCrible = crible.concepts.map(d => {
-                return {'label':d['o:title'],'id':d['o:id'],'idP':crible.item['o:title'],'labelP':crible.item['o:id']};
-            });
-            //ajoute la carto axe            
-            oCartoaxes = new cartoaxes({
-                'idSvg': 'svgGlobal',
-                'tick': 0,
-                'idDoc': item['o:id'],
-                'urlData':urlDataSonar+crible.item['o:id'],
-                'typeSrc':'IIIF',
-                'hasRatingSystem':crible.item['o:id'],
-                'crible': lstItemCrible,
-                'fctGetGrad': oPolarclock.getInstantColors,
-                'fctSavePosi': savePosi,
-                'width': width,
-                'height': height
-                });
-
-        }
-
-  var dataTimeline = <?php echo json_encode($dataTimeline); ?>;
-  var tl = TimelinesChart()(d3.select('#tlGraph').node())
-                .zQualitative(true)
-                .onLabelClick(function(l,g){
-                        var t = d3.select('#tlGraph svg');
-                        t.style('display','none');
-                        let dtl = getTimelineLabelData(l,g);
-                        console.log(dtl);
-                        document.location.href="explorer-document?id="+dtl['o:id']; 
-                })
-                .data(dataTimeline);
-  d3.select('#btnShowHideTimeline').on('click',timelineShowHide);
-  timelineShowHide();
 
 </script>
 

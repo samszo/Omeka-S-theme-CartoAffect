@@ -1,0 +1,20 @@
+<?php
+
+$idConcept = $this->params()->fromQuery('idCpt', '');
+$idCrible = $this->params()->fromQuery('idCrible', '');
+$idDoc = $this->params()->fromQuery('idDoc', '');
+$idRt = $this->params()->fromQuery('idRt', '');
+
+
+//traitement suivant le ressource template
+switch ($idRt) {
+  case $this->themeSetting('rt_idSonar'):
+    //récupère les positions pour le concepts
+    $result = $this->PosiSonar($idDoc, $idCrible);
+    break;
+}
+
+echo json_encode($result);
+
+
+?>

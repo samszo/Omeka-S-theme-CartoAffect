@@ -39,15 +39,19 @@
             svg = this.cont.append("svg")
                 .attr("width", me.width+'px')
                 .attr("height", me.height+'px')
-                .style("background-color","black");                
+            //ajout d'un rectangle car Chrome gère le background au dessus des dégradé
+            .style("background-color","black");         
+            /*
+            svg.append('rect')
+                .attr("x", 0)
+                .attr("y", lgdSize.height)
+                .attr("fill", 'white')
+                .attr("width", me.width)
+                .attr("height", me.height - lgdSize.height)
+            */            
+            
             //ajoute la légende
             legende = svg.append('g').attr('id','exploskosLegende')
-            legende.append('rect')
-              .attr("x", 0)
-              .attr("y", 0)
-              .attr("fill", 'black')
-              .attr("height", lgdSize.height)
-              .attr("width", lgdSize.width)
 
             //création du conteneur de sankey
             container = svg.append("g");
@@ -65,7 +69,7 @@
                 .nodePadding(20)
                 //.extent([[0, 5], [me.width, me.height - 5]]);
                 .extent([[0, lgdSize.height], [me.width, me.height - lgdSize.height]]);
-
+  
             me.draw(false);
 
           //ajout du tooltip
@@ -99,12 +103,11 @@
             legende.selectAll("g").remove();
 
             const link = container.append("g")
-                .attr("fill", "none")
                 .attr("stroke-opacity", 0.5)
               .selectAll("g")
               .data(links)
-              .join("g")
-                .style("mix-blend-mode", "multiply");
+              .join("g");
+              //  .style("mix-blend-mode", "multiply");
                     
             //ajout dégradé
             const gradient = link.append("linearGradient")

@@ -25,7 +25,8 @@ class Crible extends AbstractHelper
             $param = array();
             $param['property'][0]['property']= $inScheme->id()."";
             $param['property'][0]['type']='res';
-            $param['property'][0]['text']=$c->id();     
+            $param['property'][0]['text']=$c->id();
+            $param['sort_by']="jdc:ordreCrible";     
             $concepts = $view->api()->search('items',$param)->getContent();
             foreach ($concepts as $cpt) {
                 //TODO: rendre accessible la propriété concepts qui disparait lors du json encode

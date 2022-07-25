@@ -1,5 +1,5 @@
 <?php
-$ajax = $this->params()->fromPost('ajax', '');
+$ajax = $this->params()->fromQuery('ajax') ? $this->params()->fromQuery('ajax') : $this->params()->fromPost('ajax', '');
 if($ajax){
     echo $this->partial('cartoaffect/'.$page->slug(), []);
     return ;

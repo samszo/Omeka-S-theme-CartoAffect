@@ -270,35 +270,9 @@
 
         this.drawData = function () {
             if(me.urlData){
-                //enlève les anciennes évaluations
-                me.g.selectAll(".evals").remove();
                 //cherche sur le serveur les évaluations existantes               
                 $.get(me.urlData, {}, function (data) {
-                    me.g.selectAll(".evals")
-                        .data(data)
-                      .enter().append("circle")
-                        .attr("class", "evals")
-                        .attr('r',scCircle.step()/3)
-                        .attr('cx',function(d) { 
-                            //return me.x(d.valeur.numX); 
-                            return me.x(parseFloat(d['jdc:xRatingValue'][0]['@value']));                             
-                        })
-                        .attr('cy',function(d) { 
-                            //return me.y(d.valeur.numY); 
-                            return me.y(parseFloat(d['jdc:yRatingValue'][0]['@value']));                             
-                        })
-                        .attr('fill',function(d){
-                            d.degrad = {'nom':d['jdc:degradName'][0]['@value'],'colors':[]}
-                            d['jdc:degradColors'].forEach(function(c){
-                                d.degrad.colors.push(c['@value']);
-                            });
-                            return me.setGradient(d.degrad);
-                        })
-                        .attr('stroke','black')
-                        .attr("stroke-width",'1')
-                        .on('mouseenter',d => showTooltip(d))
-                        .on('mouseleave',d => hideTooltip());
-
+                    me.drawPosi(data);
                 }, "json")
                 .fail(function (e) {
                     throw new Error("Chargement des données imposible : " + e);
@@ -308,6 +282,35 @@
 
         };
 
+        this.drawPosi = function(data){
+            //enlève les anciennes évaluations
+            me.g.selectAll(".evals").remove();
+            //ajoute toutes les évaluations
+            me.g.selectAll(".evals")
+                .data(data)
+            .enter().append("circle")
+                .attr("class", "evals")
+                .attr('r',scCircle.step()/3)
+                .attr('cx',function(d) { 
+                    //return me.x(d.valeur.numX); 
+                    return me.x(parseFloat(d['jdc:xRatingValue'][0]['@value']));                             
+                })
+                .attr('cy',function(d) { 
+                    //return me.y(d.valeur.numY); 
+                    return me.y(parseFloat(d['jdc:yRatingValue'][0]['@value']));                             
+                })
+                .attr('fill',function(d){
+                    d.degrad = {'nom':d['jdc:degradName'][0]['@value'],'colors':[]}
+                    d['jdc:degradColors'].forEach(function(c){
+                        d.degrad.colors.push(c['@value']);
+                    });
+                    return me.setGradient(d.degrad);
+                })
+                .attr('stroke','black')
+                .attr("stroke-width",'1')
+                .on('mouseenter',d => showTooltip(d))
+                .on('mouseleave',d => hideTooltip());            
+        }
       
         function padExtent (e, p) {
             if (p === undefined) p = 1;
