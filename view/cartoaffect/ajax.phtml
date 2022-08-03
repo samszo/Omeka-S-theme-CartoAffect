@@ -1,0 +1,44 @@
+<?php
+
+$helper = $this->params()->fromQuery('helper','');
+$log = $this->logger();
+$user = $this->identity();
+
+switch ($helper) {
+    case 'JDC':
+        $rs = $this->JDCFactory(['user'=>$user,'params'=>$this->params()->fromQuery(),'view'=>$this]);
+        echo $this->json($rs);                
+        break;
+    case 'CartoHexa':
+            $rs = $this->CartoHexaFactory(['user'=>$user,'query'=>$this->params()->fromQuery(),'view'=>$this]);
+            echo $this->json($rs);                
+            break;
+    case 'SQL':
+        $rs = $this->QuerySqlFactory($this->params()->fromQuery());
+        echo $this->json($rs);                
+        break;
+    case 'ReseauConcept':
+        $item = $this->getItem("concept");
+        $rt =  $this->api()->read('resource_templates', ['label' => 'Rapports entre concepts'])->getContent();
+        $rc = $this->ReseauConcept($item, null, $rt);
+        echo $this->json($rc);                
+        break;
+    case 'ResourceNetworks':
+        $item = $this->getItem("concept");
+        $RNF = $this->ResourceNetworksFactory($item);
+        echo $this->json($RNF);                
+        break;
+    case 'items':
+        $rs=[];
+        foreach ($this->params()->fromQuery('ids') as $id) {
+            $rs[]=$this->api()->read('items', $id)->getContent();
+        }
+        echo $this->json($rs);                
+        break;
+}
+
+
+?>
+
+
+

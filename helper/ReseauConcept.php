@@ -1,7 +1,7 @@
 <?php
 namespace OmekaTheme\Helper;
 
-use Zend\View\Helper\AbstractHelper;
+use Laminas\View\Helper\AbstractHelper;
 
 class ReseauConcept extends AbstractHelper
 {
@@ -52,19 +52,21 @@ class ReseauConcept extends AbstractHelper
         }
 
         //requête pour récupèrer le réseau d'un concept dont il est la source
-        //POUR UN ACTANT DONNÉ
         $this->querySemanticPositionSource = array();
         $this->querySemanticPositionSource['resource_template_id']= $rtRapport->id()."";
         $this->querySemanticPositionSource['property'][0]['property']= $pIdLink."";
         $this->querySemanticPositionSource['property'][0]['type']='res';
         $this->querySemanticPositionSource['property'][0]['text']=$item->id(); 
         $this->querySemanticPositionSource['property'][0]['joiner']="and"; 
-        $this->querySemanticPositionSource['property'][1]['property']= $pIdCreator."";
-        $this->querySemanticPositionSource['property'][1]['type']='res';
-        $this->querySemanticPositionSource['property'][1]['text']=$actant->id(); 
-        $this->querySemanticPositionSource['property'][1]['joiner']="and"; 
-        //requête pour récupèrer le réseau d'un concept dont il est la destination
+
         //POUR UN ACTANT DONNÉ
+        if(isset($actant)){
+            $this->querySemanticPositionSource['property'][1]['property']= $pIdCreator."";
+            $this->querySemanticPositionSource['property'][1]['type']='res';
+            $this->querySemanticPositionSource['property'][1]['text']=$actant->id(); 
+            $this->querySemanticPositionSource['property'][1]['joiner']="and";     
+        }
+        //requête pour récupèrer le réseau d'un concept dont il est la destination
         $this->querySemanticPositionTarget = $this->querySemanticPositionSource;
         unset($this->querySemanticPositionTarget['property'][0]['property']);
         $this->querySemanticPositionTarget['property'][2]['property']= $pIdLink."";

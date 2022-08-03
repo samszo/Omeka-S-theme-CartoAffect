@@ -1,7 +1,8 @@
 <?php
 
 $ajax = $this->params()->fromQuery('ajax') ? $this->params()->fromQuery('ajax') : $this->params()->fromPost('ajax', '');
-if($ajax){
+$json = $this->params()->fromQuery('json') ? $this->params()->fromQuery('json') : $this->params()->fromPost('json', '');
+if($ajax || $json){
     echo $this->content;
     return ;
 }
@@ -57,7 +58,7 @@ $userBar = $this->userBar();
 
     <header>
         <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-            <a class="navbar-brand" href="<?php echo $site->homepage() ? $site->homepage() : $this->basePath().'/s/'.$site->slug(); ?>"><img style="background-color:white"
+            <a class="navbar-brand" href="<?php echo $this->basePath().'/s/'.$site->slug(); ?>"><img style="background-color:white"
                     src="<?php echo $this->assetUrl('img/logo-paragraphe.svg'); ?>" alt="logo-paragraphe" height="auto"
                     width="100px" /> Carto Affect
             </a>
