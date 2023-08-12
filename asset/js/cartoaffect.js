@@ -13,7 +13,7 @@ function initIHM() {
         
 
         //création de la liste des axes
-        if(cribles){
+        if(cribles.length){
                 d3.select("#ddCribles").selectAll('a').data(cribles).enter()
                         .append('a')
                         .attr('class',"dropdown-item choixCrible")
@@ -23,7 +23,7 @@ function initIHM() {
         }
 
         //création de la liste des cartographies
-        if(cartos){
+        if(cartos.length){
                 //tri la liste des cartographie
                 cartos.sort((a, b) => 
                         parseInt(a["jdc:ordreCrible"][0]["@value"]) - parseInt(b["jdc:ordreCrible"][0]["@value"])

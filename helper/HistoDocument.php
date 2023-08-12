@@ -96,7 +96,8 @@ class HistoDocument extends AbstractHelper
         $this->getTimeLineData($a,'Actants','dcterms:creator','o:created','oa:motivatedBy');        
         $tgts = $a->targets();
         foreach ($tgts as $t) {
-          $this->getTimeLineData($t,'Tags','rdf:value','o:created',"",$a->value('oa:motivatedBy')->asHtml());        
+          $v = $a->value('oa:motivatedBy');
+          $this->getTimeLineData($t,'Tags','rdf:value','o:created',"",$v ? $v->asHtml() : "");        
         }
       }
     }
@@ -136,9 +137,10 @@ class HistoDocument extends AbstractHelper
             $label = ['label'=>$rv->displayTitle(),'o:id'=>$rv->id(),'class'=>$class];
           }else{
             $label = ['label'=>$v->asHtml(),'o:id'=>$item->id(),'class'=>$class];
-          }        
+          } 
+          $v = $pVal ? $item->value($pVal) : "";      
           $label['data']=[['timeRange'=>[$dS, $dF]
-            ,'val'=> $pVal ? $item->value($pVal)->asHtml() : ($val ? $val : $p)]];
+            ,'val'=> $v ? $v->asHtml() : ($val ? $val : $p)]];
           $this->dataGroup[$g][]=$label; 
         }  
       }
