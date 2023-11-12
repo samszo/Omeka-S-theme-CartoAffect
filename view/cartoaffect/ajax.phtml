@@ -7,12 +7,16 @@ $user = $this->identity();
 switch ($helper) {
     case 'JDC':
         $rs = $this->JDCFactory(['user'=>$user,'params'=>$this->params()->fromQuery(),'view'=>$this]);
-        echo $this->json($rs);                
+        echo json_encode($rs);                
         break;
     case 'CartoHexa':
             $rs = $this->CartoHexaFactory(['user'=>$user,'query'=>$this->params()->fromQuery(),'view'=>$this]);
             echo $this->json($rs);                
             break;
+    case 'JDCsql':
+        $rs = $this->JDCSqlFactory($this->params()->fromQuery());
+        echo $this->json($rs);                
+        break;
     case 'SQL':
         $rs = $this->QuerySqlFactory($this->params()->fromQuery());
         echo $this->json($rs);                
